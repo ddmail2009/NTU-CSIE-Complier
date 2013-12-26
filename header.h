@@ -1,6 +1,7 @@
 #ifndef __HEADER_H__
 #define __HEADER_H__
 
+#include <assert.h>
 #define MAX_ARRAY_DIMENSION 10
 
 typedef enum DATA_TYPE
@@ -47,7 +48,11 @@ typedef enum UNARY_OPERATOR
 
 //C_type= type of constant ex: 1, 3.3, "const string"
 //do not modify, or lexer might break
-typedef enum C_type {INTEGERC,FLOATC,STRINGC} C_type;
+typedef enum C_type {
+    INTEGERC,
+    FLOATC,
+    STRINGC
+} C_type;
 
 typedef enum STMT_KIND
 {
@@ -116,6 +121,16 @@ typedef struct EXPRSemanticValue
         BINARY_OPERATOR binaryOp;
         UNARY_OPERATOR unaryOp;
     } op;
+
+    BINARY_OPERATOR binaryOp() {
+        assert(kind == BINARY_OPERATION);
+        return op.binaryOp;
+    }
+
+    UNARY_OPERATOR unaryOp() {
+        assert(kind == UNARY_OPERATION);
+        return op.unaryOp;
+    }
 } EXPRSemanticValue;
 
 typedef struct DECLSemanticValue
@@ -130,6 +145,10 @@ typedef struct IdentifierSemanticValue
     char *identifierName;
     struct SymbolTableEntry *symbolTableEntry;
     IDENTIFIER_KIND kind;
+
+    const char* name() {
+        return identifierName;
+    }
 } IdentifierSemanticValue;
 
 typedef struct TypeSpecSemanticValue
@@ -139,32 +158,124 @@ typedef struct TypeSpecSemanticValue
 
 //don't modify or lexer may break
 typedef struct CON_Type{
-        C_type  const_type;
+    C_type  const_type;
 	union {
 		int     intval;
 		double  fval;
-		char    *sc; }
-		const_u;
+		char    *sc; 
+    } const_u;
+
+    C_type type() {
+        return const_type;
+    }
+    int Int() {
+        assert(type() == INTEGERC);
+        return const_u.intval;
+    }
+    double Double() {
+        assert(type() == FLOATC);
+        return const_u.fval;
+    }
+    char* Char() {
+        assert(type() == INTEGERC);
+        return const_u.sc;
+    }
 } CON_Type;
 
 
-struct AST_NODE {
-	struct AST_NODE *child;
-	struct AST_NODE *parent;
-	struct AST_NODE *rightSibling;
-	struct AST_NODE *leftmostSibling;
-	AST_TYPE nodeType;
-    DATA_TYPE dataType;
-	int linenumber;
-	union {
-        IdentifierSemanticValue identifierSemanticValue;
-        STMTSemanticValue stmtSemanticValue;
-        DECLSemanticValue declSemanticValue;
-        EXPRSemanticValue exprSemanticValue;
-		CON_Type *const1;
-	} semantic_value;
+class AST_NODE {
+    public:
+        struct AST_NODE *child;
+        struct AST_NODE *parent;
+        struct AST_NODE *rightSibling;
+        struct AST_NODE *leftmostSibling;
+        AST_TYPE nodeType;
+        DATA_TYPE dataType;
+        int linenumber;
+        union {
+            IdentifierSemanticValue identifierSemanticValue;
+            STMTSemanticValue stmtSemanticValue;
+            DECLSemanticValue declSemanticValue;
+            EXPRSemanticValue exprSemanticValue;
+            CON_Type *const1;
+        } semantic_value;
+
+        void visit();
+
+        void setSymbolTableEntry(SymbolTableEntry *entry){
+            assert(type() == IDENTIFIER_NODE);
+            semantic_value.identifierSemanticValue.symbolTableEntry = entry;
+        }
+
+        AST_TYPE type() {
+            return nodeType;
+        }
+
+        float processExprOp(int, int);
+        float processExprOp(int, float);
+        float processExprOp(float, int);
+        float processExprOp(float, float);
+
+        DATA_TYPE getDataType() {
+            return dataType;
+        }
+
+        void setDataType(DATA_TYPE type){
+            dataType = type;
+        }
+
+        STMT_KIND getStmtType(){
+            assert(type() == STMT_NODE);
+            return semantic_value.stmtSemanticValue.kind;
+        }
+
+        C_type getConType() {
+            assert(type() == CONST_VALUE_NODE);
+            return semantic_value.const1->type();
+        }
+
+        int getConIntValue() {
+            assert(getConType() == INTEGERC);
+            return semantic_value.const1->const_u.intval;
+        }
+
+        double getConFloatValue() {
+            assert(getConType() == FLOATC);
+            return semantic_value.const1->const_u.fval;
+        }
+
+        char* getCharPtrValue() {
+            assert(getConType() == STRINGC);
+            return semantic_value.const1->const_u.sc;
+        }
+
+        DECL_KIND getDeclKind() {
+            assert(type() == DECLARATION_NODE);
+            return semantic_value.declSemanticValue.kind;
+        }
+
+        IDENTIFIER_KIND getIDKind() {
+            assert(type() == IDENTIFIER_NODE);
+            return semantic_value.identifierSemanticValue.kind;
+        }
+
+        EXPR_KIND getExprKind() {
+            assert(type() == EXPR_NODE);
+            return semantic_value.exprSemanticValue.kind;
+        }
+
+        BINARY_OPERATOR getBinaryOp() {
+            assert(type() == EXPR_NODE);
+            return semantic_value.exprSemanticValue.binaryOp();
+        }
+        
+        const char* getIDName() {
+            assert(type() == IDENTIFIER_NODE);
+            return semantic_value.identifierSemanticValue.name();
+        }
 };
-typedef struct AST_NODE AST_NODE;
+
+struct SymbolTable;
 
 AST_NODE *Allocate(AST_TYPE type);
 void semanticAnalysis(AST_NODE *root);
