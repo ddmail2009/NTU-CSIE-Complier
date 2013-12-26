@@ -6,10 +6,11 @@ const char* DATA= ".data";
 const char* WORD= ".word";
 
 extern void CodeGenStream(const char *format, ...);
+int reg_number = 0;
 
-int gen_head(char *name) {
+int gen_head(const char *name) {
     CodeGenStream("%s", TEXT);
-    CodeGenStream("%s", name);
+    CodeGenStream("%s:", name);
     return 0;
 }
 
@@ -52,4 +53,8 @@ void genVariableWithInit(bool first, C_type c, const char* name, int a, double d
     else if(c == FLOATC) {
         CodeGenStream("_%s:\t%s %lf", name, WORD, d);
     }
+}
+
+int getReg() {
+    return 1;
 }
