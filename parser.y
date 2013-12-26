@@ -9,6 +9,14 @@
 #include "symbolTable.h"
 #include "codeGen.h"
 int linenumber = 1;
+
+
+int yylex(void);
+void yyerror(const char *msg){
+  fprintf(stderr, "error msg: %s, error found in line: %d", msg, linenumber);
+  exit(1);
+}
+
 AST_NODE *prog;
 
 extern int g_anyErrorOccur;
@@ -97,9 +105,9 @@ static inline AST_NODE* makeExprNode(EXPR_KIND exprKind, int operationEnumValue)
     exprNode->semantic_value.exprSemanticValue.isConstEval = 0;
     exprNode->semantic_value.exprSemanticValue.kind = exprKind;
     if (exprKind == BINARY_OPERATION) {
-        exprNode->semantic_value.exprSemanticValue.op.binaryOp = operationEnumValue;
+        exprNode->semantic_value.exprSemanticValue.op.binaryOp = (BINARY_OPERATOR) operationEnumValue;
     } else if (exprKind == UNARY_OPERATION) {
-        exprNode->semantic_value.exprSemanticValue.op.unaryOp = operationEnumValue;
+        exprNode->semantic_value.exprSemanticValue.op.unaryOp = (UNARY_OPERATOR) operationEnumValue;
     } else {
         printf("Error in static inline AST_NODE* makeExprNode(EXPR_KIND exprKind, int operationEnumValue)\n");
     }
@@ -203,7 +211,7 @@ function_head   : type ID
                 | VOID ID
                     {
                         $$ = makeDeclNode(FUNCTION_DECL);
-                        AST_NODE* voidNode = makeIDNode("void", NORMAL_ID);
+                        AST_NODE* voidNode = makeIDNode((char*)"void", NORMAL_ID);
                         makeFamily($$, 2, voidNode, makeIDNode($2, NORMAL_ID));
                     }
                 | ID ID
@@ -323,7 +331,7 @@ type_decl 	: TYPEDEF type id_list MK_SEMICOLON
             | TYPEDEF VOID id_list MK_SEMICOLON
                 {
                     $$ = makeDeclNode(TYPE_DECL);
-                    AST_NODE* voidNode = makeIDNode("void", NORMAL_ID);
+                    AST_NODE* voidNode = makeIDNode((char*)"void", NORMAL_ID);
                     makeFamily($$, 2, voidNode, $3);
                 }
             ;
@@ -342,11 +350,11 @@ var_decl	: type init_id_list MK_SEMICOLON
 
 type		: INT
                 {
-                    $$ = makeIDNode("int", NORMAL_ID);
+                    $$ = makeIDNode((char*)"int", NORMAL_ID);
                 }
             | FLOAT
                 {
-                    $$ = makeIDNode("float", NORMAL_ID);
+                    $$ = makeIDNode((char*)"float", NORMAL_ID);
                 }
             ;
 
@@ -755,29 +763,24 @@ dim_list	: dim_list MK_LB expr MK_RB
 %%
 
 #include "lex.yy.c"
-main (argc, argv)
-int argc;
-char *argv[];
-  {
-     yyin = fopen(argv[1],"r");
-     yyparse();
-     // printGV(prog, NULL);
+int main (int argc, char *argv[]){
+  yyin = fopen(argv[1],"r");
+  yyparse();
+  // printGV(prog, NULL);
 
-     initializeSymbolTable();
+  initializeSymbolTable();
 
-     semanticAnalysis(prog);
-     codeGen(prog);
+  semanticAnalysis(prog);
+  codeGen(prog);
 
-     symbolTableEnd();
-     if (!g_anyErrorOccur) {
-        printf("Parsing completed. No errors found.\n");
-     }
-  } /* main */
+  symbolTableEnd();
+  if (!g_anyErrorOccur) {
+    printf("Parsing completed. No errors found.\n");
+  }
+} /* main */
 
 
-int yyerror (mesg)
-char *mesg;
-  {
+int yyerror (char *mesg){
   printf("%s\t%d\t%s\t%s\n", "Error found in Line ", linenumber, "next token: ", yytext );
   exit(1);
-  }
+}

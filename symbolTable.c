@@ -80,21 +80,21 @@ void initializeSymbolTable()
     intAttribute->attr.typeDescriptor = (TypeDescriptor*)malloc(sizeof(TypeDescriptor));
     intAttribute->attr.typeDescriptor->kind = SCALAR_TYPE_DESCRIPTOR;
     intAttribute->attr.typeDescriptor->properties.dataType = INT_TYPE;
-    enterSymbol(SYMBOL_TABLE_INT_NAME, intAttribute);
+    enterSymbol((char*)SYMBOL_TABLE_INT_NAME, intAttribute);
 
     SymbolAttribute* floatAttribute = (SymbolAttribute*)malloc(sizeof(SymbolAttribute));
     floatAttribute->attributeKind = TYPE_ATTRIBUTE;
     floatAttribute->attr.typeDescriptor = (TypeDescriptor*)malloc(sizeof(TypeDescriptor));
     floatAttribute->attr.typeDescriptor->kind = SCALAR_TYPE_DESCRIPTOR;
     floatAttribute->attr.typeDescriptor->properties.dataType = FLOAT_TYPE;
-    enterSymbol(SYMBOL_TABLE_FLOAT_NAME, floatAttribute);
+    enterSymbol((char*)SYMBOL_TABLE_FLOAT_NAME, floatAttribute);
 
     SymbolAttribute* voidAttribute = (SymbolAttribute*)malloc(sizeof(SymbolAttribute));
     voidAttribute->attributeKind = TYPE_ATTRIBUTE;
     voidAttribute->attr.typeDescriptor = (TypeDescriptor*)malloc(sizeof(TypeDescriptor));
     voidAttribute->attr.typeDescriptor->kind = SCALAR_TYPE_DESCRIPTOR;
     voidAttribute->attr.typeDescriptor->properties.dataType = VOID_TYPE;
-    enterSymbol(SYMBOL_TABLE_VOID_NAME, voidAttribute);
+    enterSymbol((char*)SYMBOL_TABLE_VOID_NAME, voidAttribute);
 
     SymbolAttribute* readAttribute = NULL;
     readAttribute = (SymbolAttribute*)malloc(sizeof(SymbolAttribute));
@@ -103,7 +103,7 @@ void initializeSymbolTable()
     readAttribute->attr.functionSignature->returnType = INT_TYPE;
     readAttribute->attr.functionSignature->parameterList = NULL;
     readAttribute->attr.functionSignature->parametersCount = 0;
-    enterSymbol(SYMBOL_TABLE_SYS_LIB_READ, readAttribute);
+    enterSymbol((char*)SYMBOL_TABLE_SYS_LIB_READ, readAttribute);
 
     SymbolAttribute* freadAttribute = NULL;
     freadAttribute = (SymbolAttribute*)malloc(sizeof(SymbolAttribute));
@@ -112,7 +112,7 @@ void initializeSymbolTable()
     freadAttribute->attr.functionSignature->returnType = FLOAT_TYPE;
     freadAttribute->attr.functionSignature->parameterList = NULL;
     freadAttribute->attr.functionSignature->parametersCount = 0;
-    enterSymbol(SYMBOL_TABLE_SYS_LIB_FREAD, freadAttribute);
+    enterSymbol((char*)SYMBOL_TABLE_SYS_LIB_FREAD, freadAttribute);
 }
 
 void symbolTableEnd()
