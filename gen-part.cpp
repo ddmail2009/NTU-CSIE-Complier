@@ -1,8 +1,9 @@
-#include <stdio.h>
+#include "header.h"
+#include <cstdio>
+#include <cstring>
 const char* TEXT= ".text";
 const char* DATA= ".data";
 const char* WORD= ".word";
-
 
 extern void CodeGenStream(const char *format, ...);
 
@@ -30,7 +31,7 @@ void gen_epilogue(const char *functionName, int offset) {
     CodeGenStream("lw\t$ra, 4($fp)"); // restore return address
     CodeGenStream("add\t$sp, $fp, 4"); // pop AR
     CodeGenStream("lw\t$fp, 0($fp)"); // restore caller (old) $fp
-    if (strcmp(name, “main”) == 0) {
+    if (strcmp(functionName, "main") == 0) {
         CodeGenStream("li\t$v0, 10");
         CodeGenStream("syscall");
     }
@@ -41,11 +42,14 @@ void gen_epilogue(const char *functionName, int offset) {
     CodeGenStream("_framesize_%s: %s %d", functionName, WORD, offset);
 }
 
-void genVariableWithInit(C_type c, const char* name, int a, double d) {
-    if(C_type == INTEGERC) {
+void genVariableWithInit(bool first, C_type c, const char* name, int a, double d) {
+    if(first) {
+        CodeGenStream("%s", DATA);
+    }
+    if(c == INTEGERC) {
         CodeGenStream("_%s:\t%s %d", name, WORD, a);
     }
-    else if(C_type == FLOATC) {
+    else if(c == FLOATC) {
         CodeGenStream("_%s:\t%s %lf", name, WORD, d);
     }
 }
