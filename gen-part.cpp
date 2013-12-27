@@ -30,7 +30,7 @@ void gen_prologue(const char *functionName) {
 
     /* naive save Caller Save Register */
     for(int i = 0; i < 8; i++)
-      CodeGenStream("sw\t$%d,%d($sp)", 8 + i, 32 - 4 * i);
+        CodeGenStream("sw\t$%d,%d($sp)", 8 + i, 32 - 4 * i);
 
     /* pushNewAR(); */ 
 
@@ -42,14 +42,14 @@ void gen_epilogue(const char *functionName, int offset) {
     CodeGenStream("_end_%s:", functionName);
     /* naive restore Caller Save Register */
     for(int i = 0; i < 8; i++)
-      CodeGenStream("lw\t$%d,%d($sp)", 8 + i, 32 - 4 * i);
+        CodeGenStream("lw\t$%d,%d($sp)", 8 + i, 32 - 4 * i);
 
     CodeGenStream("lw\t$ra, 4($fp)"); // restore return address
     CodeGenStream("add\t$sp, $fp, 4"); // pop AR
     CodeGenStream("lw\t$fp, 0($fp)"); // restore caller (old) $fp
     if (strcmp(functionName, "main") == 0) {
-      SysCallParameter p(EXIT);
-      genSysCall(&p);
+        SysCallParameter p(EXIT);
+        genSysCall(&p);
     }
     else {
         CodeGenStream("jr\t$ra");
@@ -62,91 +62,97 @@ void gen_epilogue(const char *functionName, int offset) {
     CodeGenStream("_framesize_%s: %s %d", functionName, WORD, offset);
 }
 
-void genGlobalVariableWithInit(const CON_Type* c, const char* idName) {
-  CodeGenStream("%s", DATA);
-  if(c->const_type == INTEGERC) {
-    CodeGenStream("_%s:\t%s %d", idName, WORD, c->const_u.intval);
-  }
-  else if(c->const_type == FLOATC) {
-    CodeGenStream("_%s:\t%s %lf", idName, WORD, c->const_u.fval);
-  }
-  else {
-    CodeGenStream("string%d: .asciiz \"%s\"", string_literal_number, c->const_u.sc);
-    string_literal_number++;
-  }
+void genGlobalVariableWithInit(const GlobalVariable* g) {
+    CodeGenStream("%s", DATA);
+    if(g->type() == INT_TYPE) {
+        CodeGenStream("_%s:\t%s %d", g->getId(), WORD, g->getInt()); */
+    }
+    else if(g->type() == FLOAT_TYPE) {
+        CodeGenStream("_%s:\t%s %lf", g->getId(), WORD, g->getFloat());
+    }
+    else if(g->type() == CONST_STRING_TYPE) {
+        CodeGenStream("string%d: .asciiz \"%s\"", string_literal_number, g->getString());
+        string_literal_number++;
+    }
+    else {
+        fprintf(stderr, "unknowed type of global variable\n");
+        exit(1);
+    }
 }
 
 inline bool isCallerSaveRegister(int reg) {
-  return (reg > 7 && reg < 16) || reg == 24 || reg == 25;
+    return (reg > 7 && reg < 16) || reg == 24 || reg == 25;
 }
 
 inline bool isCalleeSaveRegister(int reg) {
-  return reg > 15 && reg < 24;
+    return reg > 15 && reg < 24;
 }
 
 /* naive method */
 int getReg() {
-  if(reg_number <= 25) {
-    return ++reg_number;
-  }
-  reg_number = 8;
-  return reg_number;
+    if(reg_number <= 25) {
+        return ++reg_number;
+    }
+    reg_number = 8;
+    return reg_number;
 }
 
 /* In C--, we use double instead of float to implement FLOATC.
  *
- * NOTE: if write_string, PLEASE CALL genStringLiteral FIRST
+ * NOTE: if write_string, PLEASE CALL genGlobalVariableWithInit FIRST
  *
  */
 void genSysCall(const SysCallParameter* information) {
-  switch(information->type) {
-    case PRINT_INT:
-      CodeGenStream("#print_int system call");
-      CodeGenStream("li\tv0 %d", information->type);
-      CodeGenStream("la\t$a0 %d", information->val.ival);
-      break;
-    case PRINT_FLOAT:
-      fprintf(stderr, "this case shouldn't be happened in C--\n");
-      exit(1);
-      break;
-    case PRINT_DOUBLE:
-      CodeGenStream("#print_double system call");
-      CodeGenStream("li\tv0 %d", information->type);
-      CodeGenStream("la\t$f12 %lf", information->val.fval);
-      break;
-    case PRINT_STRING:
-      CodeGenStream("#print_string system call");
-      CodeGenStream("li\tv0 %d", information->type);
-      break;
-    case READ_INT:
-      CodeGenStream("#read_int system call");
-      CodeGenStream("li\tv0 %d", information->type);
-      break;
-    case READ_FLOAT:
-      fprintf(stderr, "this case shouldn't be happened in C--\n");
-      exit(1);
-      break;
-    case READ_DOUBLE:
-      CodeGenStream("#read_double system call");
-      CodeGenStream("li\tv0 %d", information->type);
-      break;
-    case READ_STRING: 
-      CodeGenStream("#read_string system call");
-      CodeGenStream("li\tv0 %d", information->type);
-      CodeGenStream("la\t$a0 string%d", string_literal_number - 1); // address of string to print
-      break;
-    case SBRK:
-      CodeGenStream("#sbrk system call");
-      CodeGenStream("li\tv0 %d", information->type);
-      break;
-    case EXIT:
-      CodeGenStream("#exit system call");
-      CodeGenStream("li\tv0 %d", information->type);
-      break;
-    default:
-      fprintf(stderr, "unknowed type of SysCall\n");
-      exit(1);
-      break;
-  }
-  CodeGenStream("%s", SYSCALL);
+    switch(information->type) {
+        case PRINT_INT:
+            CodeGenStream("#print_int system call");
+            CodeGenStream("li\tv0, %d", information->type);
+            CodeGenStream("la\t$a0, %d", information->val.ival);
+            break;
+        case PRINT_FLOAT:
+            fprintf(stderr, "this case shouldn't be happened in C--\n");
+            exit(1);
+            break;
+        case PRINT_DOUBLE:
+            CodeGenStream("#print_double system call");
+            CodeGenStream("li\tv0, %d", information->type);
+            CodeGenStream("la\t$f12, %lf", information->val.fval);
+            break;
+        case PRINT_STRING:
+            CodeGenStream("#print_string system call");
+            CodeGenStream("li\tv0, %d", information->type);
+            /* assume the const string is generated just before the genSysCall */
+            CodeGenStream("la\t$a0, string%d", string_literal_number - 1);
+            break;
+        case READ_INT:
+            CodeGenStream("#read_int system call");
+            CodeGenStream("li\tv0, %d", information->type);
+            break;
+        case READ_FLOAT:
+            fprintf(stderr, "this case shouldn't be happened in C--\n");
+            exit(1);
+            break;
+        case READ_DOUBLE:
+            CodeGenStream("#read_double system call");
+            CodeGenStream("li\tv0, %d", information->type);
+            break;
+        case READ_STRING: 
+            CodeGenStream("#read_string system call");
+            CodeGenStream("li\tv0, %d", information->type);
+            CodeGenStream("la\t$a0, string%d", string_literal_number - 1); // address of string to print
+            break;
+        case SBRK:
+            CodeGenStream("#sbrk system call");
+            CodeGenStream("li\tv0, %d", information->type);
+            break;
+        case EXIT:
+            CodeGenStream("#exit system call");
+            CodeGenStream("li\tv0, %d", information->type);
+            break;
+        default:
+            fprintf(stderr, "unknowed type of SysCall\n");
+            exit(1);
+            break;
+    }
+    CodeGenStream("%s", SYSCALL);
 }
