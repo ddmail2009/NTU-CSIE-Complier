@@ -28,13 +28,22 @@ void gen_prologue(const char *functionName) {
     CodeGenStream("lw\t$2, _framesize_%s", functionName);
     CodeGenStream("sub\t$sp,$sp,$2");
 
+    /* naive save Caller Save Register */
+    for(int i = 0; i < 8; i++)
+      CodeGenStream("sw\t$%d,%d($sp)", 8 + i, 32 - 4 * i);
+
     /* pushNewAR(); */ 
 
     CodeGenStream("_begin_%s:", functionName);
 }
 
+// offset is at least 32 bytes (at least 8 caller save registers)
 void gen_epilogue(const char *functionName, int offset) {
     CodeGenStream("_end_%s:", functionName);
+    /* naive restore Caller Save Register */
+    for(int i = 0; i < 8; i++)
+      CodeGenStream("lw\t$%d,%d($sp)", 8 + i, 32 - 4 * i);
+
     CodeGenStream("lw\t$ra, 4($fp)"); // restore return address
     CodeGenStream("add\t$sp, $fp, 4"); // pop AR
     CodeGenStream("lw\t$fp, 0($fp)"); // restore caller (old) $fp
@@ -46,6 +55,10 @@ void gen_epilogue(const char *functionName, int offset) {
         CodeGenStream("jr\t$ra");
         CodeGenStream("%s", DATA);
     }
+
+    /* determine the _framsize_functionName, and this value is at least 32
+     * bytes
+     */
     CodeGenStream("_framesize_%s: %s %d", functionName, WORD, offset);
 }
 
