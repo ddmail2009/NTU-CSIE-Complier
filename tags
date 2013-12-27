@@ -21,7 +21,7 @@ ASSIGN_STMT	header.h	/^    ASSIGN_STMT, \/\/TODO:for simpler implementation, ass
 AST_NODE	header.h	/^class AST_NODE {$/;"	c
 AST_TYPE	header.h	/^typedef enum AST_TYPE$/;"	g
 AST_TYPE	header.h	/^} AST_TYPE;$/;"	t	typeref:enum:AST_TYPE
-AST_TYPE_string	functions.c	/^char *AST_TYPE_string[] = {"PROGRAM", "GLOBAL_DECL_LIST", "GLOBAL_DECL", "DECL_LIST", "FUNCTION_DECL", "PARAM_LIST", "PARAM", "DIM_FN", "DIMFN1", "EXPR_NULL", "BLOCK", "DECL", "TYPE_DECL", "VAR_DECL",$/;"	v
+AST_TYPE_string	functions.c	/^const char *AST_TYPE_string[] = {"PROGRAM", "GLOBAL_DECL_LIST", "GLOBAL_DECL", "DECL_LIST", "FUNCTION_DECL", "PARAM_LIST", "PARAM", "DIM_FN", "DIMFN1", "EXPR_NULL", "BLOCK", "DECL", "TYPE_DECL", "VAR_DECL",$/;"	v
 Allocate	alloc.c	/^AST_NODE *Allocate(AST_TYPE type){$/;"	f
 ArrayProperties	symbolTable.h	/^typedef struct ArrayProperties$/;"	s
 ArrayProperties	symbolTable.h	/^} ArrayProperties;$/;"	t	typeref:struct:ArrayProperties
@@ -156,13 +156,14 @@ C_type	header.h	/^typedef enum C_type {$/;"	g
 C_type	header.h	/^} C_type;$/;"	t	typeref:enum:C_type
 Char	header.h	/^    char* Char() {$/;"	f	struct:CON_Type
 CodeGenStream	codeGen.c	/^void CodeGenStream(const char *format, ...){$/;"	f
+DATA	gen-part.cpp	/^const char* DATA= ".data";$/;"	v
 DATA_BOT	spim/CPU/mem.h	72;"	d
 DATA_LIMIT	spim/CPU/spim.h	132;"	d
 DATA_PC	spim/CPU/data.c	57;"	d	file:
 DATA_SIZE	spim/CPU/spim.h	126;"	d
 DATA_TYPE	header.h	/^typedef enum DATA_TYPE$/;"	g
 DATA_TYPE	header.h	/^} DATA_TYPE;$/;"	t	typeref:enum:DATA_TYPE
-DEBUG	Makefile	/^DEBUG = 0$/;"	m
+DEBUG	Makefile	/^DEBUG = 1$/;"	m
 DECLARATION_NODE	header.h	/^    DECLARATION_NODE,$/;"	e	enum:AST_TYPE
 DECLSemanticValue	header.h	/^typedef struct DECLSemanticValue$/;"	s
 DECLSemanticValue	header.h	/^} DECLSemanticValue;$/;"	t	typeref:struct:DECLSemanticValue
@@ -199,8 +200,8 @@ EXCESSIVE_ARRAY_DIM_DECLARATION	semanticAnalysis.c	/^    EXCESSIVE_ARRAY_DIM_DEC
 EXIT2_SYSCALL	spim/CPU/spim-syscall.h	52;"	d
 EXIT2_SYSCALL	spim/CPU/syscall.h	61;"	d
 EXIT_CMD	spim/spim/spim.c	/^  EXIT_CMD,$/;"	e	enum:__anon1	file:
-EXIT_SUCCESS	parser.tab.c	404;"	d	file:
-EXIT_SUCCESS	parser.tab.c	432;"	d	file:
+EXIT_SUCCESS	parser.tab.c	412;"	d	file:
+EXIT_SUCCESS	parser.tab.c	440;"	d	file:
 EXIT_SYSCALL	spim/CPU/spim-syscall.h	43;"	d
 EXIT_SYSCALL	spim/CPU/syscall.h	51;"	d
 EXPR	spim/CPU/inst.h	148;"	d
@@ -325,6 +326,8 @@ F_SRC1	spim/CPU/parser.y	/^F_SRC1:		FP_REGISTER ;$/;"	l
 F_SRC2	spim/CPU/parser.y	/^F_SRC2:		FP_REGISTER ;$/;"	l
 FunctionSignature	symbolTable.h	/^typedef struct FunctionSignature$/;"	s
 FunctionSignature	symbolTable.h	/^} FunctionSignature;$/;"	t	typeref:struct:FunctionSignature
+Function_End	codeGen.h	/^  Function_Start, Function_End$/;"	e	enum:TagSignal
+Function_Start	codeGen.h	/^  Function_Start, Function_End$/;"	e	enum:TagSignal
 HASH	symbolTable.c	/^int HASH(char * str) {$/;"	f
 HASHBITS	spim/CPU/sym-tbl.c	65;"	d	file:
 HASH_TABLE_SIZE	symbolTable.h	13;"	d
@@ -342,9 +345,14 @@ IDENTIFIER_KIND	header.h	/^typedef enum IDENTIFIER_KIND$/;"	g
 IDENTIFIER_KIND	header.h	/^} IDENTIFIER_KIND;$/;"	t	typeref:enum:IDENTIFIER_KIND
 IDENTIFIER_NODE	header.h	/^    IDENTIFIER_NODE,$/;"	e	enum:AST_TYPE
 IDISP	spim/CPU/inst.h	131;"	d
+IF	codeGen.h	/^      IF, IF_Cascade$/;"	e	enum:TagSystem::tagState
 IF	parser.tab.c	/^    IF = 263,$/;"	e	enum:yytokentype	file:
 IF	parser.tab.h	/^    IF = 263,$/;"	e	enum:yytokentype
+IF_Cascade	codeGen.h	/^      IF, IF_Cascade$/;"	e	enum:TagSystem::tagState
+IF_Cascade	codeGen.h	/^  IF_Start, IF_Cascade, IF_End,$/;"	e	enum:TagSignal
+IF_End	codeGen.h	/^  IF_Start, IF_Cascade, IF_End,$/;"	e	enum:TagSignal
 IF_STMT	header.h	/^    IF_STMT,$/;"	e	enum:STMT_KIND
+IF_Start	codeGen.h	/^  IF_Start, IF_Cascade, IF_End,$/;"	e	enum:TagSignal
 IMM	spim/CPU/inst.h	122;"	d
 IMM16	spim/CPU/parser.y	/^IMM16:	IMM32$/;"	l
 IMM32	spim/CPU/parser.y	/^IMM32:		ABS_ADDR$/;"	l
@@ -453,7 +461,7 @@ NULLARY_OPS	spim/CPU/parser.y	/^NULLARY_OPS:	Y_ERET_OP$/;"	l
 NULLARY_OPS_REV2	spim/CPU/parser.y	/^NULLARY_OPS_REV2:	Y_DERET_OP$/;"	l
 NUL_NODE	header.h	/^    NUL_NODE,$/;"	e	enum:AST_TYPE
 NaN	spim/CPU/run.c	38;"	d	file:
-OBJECT	Makefile	/^OBJECT = parser.tab.c parser.tab.o lex.yy.c alloc.o functions.o semanticAnalysis.o symbolTable.o$/;"	m
+OBJECT	Makefile	/^OBJECT = parser.tab.c parser.tab.o lex.yy.c alloc.o functions.o semanticAnalysis.o symbolTable.o codeGen.o$/;"	m
 OBJS	spim/spim/Makefile	/^OBJS = spim.o spim-utils.o run.o mem.o inst.o data.o sym-tbl.o parser_yacc.o lex.yy.o \\$/;"	m
 OP	spim/CPU/dump_ops.c	55;"	d	file:
 OP	spim/CPU/inst.c	1245;"	d	file:
@@ -661,6 +669,7 @@ TARGET	Makefile	/^TARGET = parser$/;"	m
 TARGET	spim/CPU/inst.h	142;"	d
 TERM	spim/CPU/parser.y	/^TERM:		Y_NL$/;"	l
 TEST_DIR	spim/spim/Makefile	/^TEST_DIR = ..\/Tests$/;"	m
+TEXT	gen-part.cpp	/^const char* TEXT= ".text";$/;"	v
 TEXT_BOT	spim/CPU/mem.h	49;"	d
 TEXT_CHUNK_SIZE	spim/CPU/mem.h	56;"	d
 TEXT_SIZE	spim/CPU/spim.h	110;"	d
@@ -683,6 +692,8 @@ TYPEDEF	parser.tab.h	/^    TYPEDEF = 267,$/;"	e	enum:yytokentype
 TYPEDEF_VOID_ARRAY	semanticAnalysis.c	/^    TYPEDEF_VOID_ARRAY,$/;"	e	enum:ErrorMsgKind	file:
 TYPE_ATTRIBUTE	symbolTable.h	/^    TYPE_ATTRIBUTE,$/;"	e	enum:SymbolAttributeKind
 TYPE_DECL	header.h	/^    TYPE_DECL,$/;"	e	enum:DECL_KIND
+TagSignal	codeGen.h	/^enum TagSignal{$/;"	g
+TagSystem	codeGen.h	/^class TagSystem{$/;"	c
 TypeDescriptor	symbolTable.h	/^typedef struct TypeDescriptor$/;"	s
 TypeDescriptor	symbolTable.h	/^} TypeDescriptor;$/;"	t	typeref:struct:TypeDescriptor
 TypeDescriptorKind	symbolTable.h	/^typedef enum TypeDescriptorKind$/;"	g
@@ -719,92 +730,93 @@ WHILE	parser.tab.c	/^    WHILE = 265,$/;"	e	enum:yytokentype	file:
 WHILE	parser.tab.h	/^    WHILE = 265,$/;"	e	enum:yytokentype
 WHILE_STMT	header.h	/^    WHILE_STMT,$/;"	e	enum:STMT_KIND
 WITH_INIT_ID	header.h	/^    WITH_INIT_ID, \/\/ID_NODE->child = initial value$/;"	e	enum:IDENTIFIER_KIND
+WORD	gen-part.cpp	/^const char* WORD= ".word";$/;"	v
 WRITE_SYSCALL	spim/CPU/spim-syscall.h	49;"	d
 WRITE_SYSCALL	spim/CPU/syscall.h	58;"	d
 YACC	Makefile	/^YACC = bison -v$/;"	m
 YACC	spim/spim/Makefile	/^YACC=bison$/;"	m
 YACCFLAG	Makefile	/^YACCFLAG = -d$/;"	m
-YYABORT	parser.tab.c	836;"	d	file:
-YYACCEPT	parser.tab.c	835;"	d	file:
-YYBACKUP	parser.tab.c	842;"	d	file:
+YYABORT	parser.tab.c	844;"	d	file:
+YYACCEPT	parser.tab.c	843;"	d	file:
+YYBACKUP	parser.tab.c	850;"	d	file:
 YYBISON	parser.tab.c	44;"	d	file:
 YYBISON_VERSION	parser.tab.c	47;"	d	file:
-YYCASE_	parser.tab.c	1183;"	d	file:
-YYCASE_	parser.tab.c	1193;"	d	file:
-YYCOPY	parser.tab.c	496;"	d	file:
-YYCOPY	parser.tab.c	499;"	d	file:
-YYCOPY_NEEDED	parser.tab.c	471;"	d	file:
-YYDEBUG	parser.tab.c	197;"	d	file:
+YYCASE_	parser.tab.c	1191;"	d	file:
+YYCASE_	parser.tab.c	1201;"	d	file:
+YYCOPY	parser.tab.c	504;"	d	file:
+YYCOPY	parser.tab.c	507;"	d	file:
+YYCOPY_NEEDED	parser.tab.c	479;"	d	file:
+YYDEBUG	parser.tab.c	205;"	d	file:
 YYDEBUG	parser.tab.h	37;"	d
-YYDPRINTF	parser.tab.c	873;"	d	file:
-YYDPRINTF	parser.tab.c	988;"	d	file:
-YYEMPTY	parser.tab.c	832;"	d	file:
-YYEOF	parser.tab.c	833;"	d	file:
-YYERRCODE	parser.tab.c	861;"	d	file:
-YYERROR	parser.tab.c	837;"	d	file:
-YYERROR_VERBOSE	parser.tab.c	185;"	d	file:
-YYERROR_VERBOSE	parser.tab.c	186;"	d	file:
-YYERROR_VERBOSE	parser.tab.c	188;"	d	file:
-YYFINAL	parser.tab.c	512;"	d	file:
-YYFPRINTF	parser.tab.c	870;"	d	file:
-YYFREE	parser.tab.c	442;"	d	file:
-YYINITDEPTH	parser.tab.c	997;"	d	file:
-YYLAST	parser.tab.c	514;"	d	file:
-YYMALLOC	parser.tab.c	436;"	d	file:
-YYMAXDEPTH	parser.tab.c	1008;"	d	file:
-YYMAXUTOK	parser.tab.c	528;"	d	file:
-YYNNTS	parser.tab.c	519;"	d	file:
-YYNRULES	parser.tab.c	521;"	d	file:
-YYNSTATES	parser.tab.c	523;"	d	file:
-YYNTOKENS	parser.tab.c	517;"	d	file:
-YYPACT_NINF	parser.tab.c	622;"	d	file:
-YYPOPSTACK	parser.tab.c	1308;"	d	file:
+YYDPRINTF	parser.tab.c	881;"	d	file:
+YYDPRINTF	parser.tab.c	996;"	d	file:
+YYEMPTY	parser.tab.c	840;"	d	file:
+YYEOF	parser.tab.c	841;"	d	file:
+YYERRCODE	parser.tab.c	869;"	d	file:
+YYERROR	parser.tab.c	845;"	d	file:
+YYERROR_VERBOSE	parser.tab.c	193;"	d	file:
+YYERROR_VERBOSE	parser.tab.c	194;"	d	file:
+YYERROR_VERBOSE	parser.tab.c	196;"	d	file:
+YYFINAL	parser.tab.c	520;"	d	file:
+YYFPRINTF	parser.tab.c	878;"	d	file:
+YYFREE	parser.tab.c	450;"	d	file:
+YYINITDEPTH	parser.tab.c	1005;"	d	file:
+YYLAST	parser.tab.c	522;"	d	file:
+YYMALLOC	parser.tab.c	444;"	d	file:
+YYMAXDEPTH	parser.tab.c	1016;"	d	file:
+YYMAXUTOK	parser.tab.c	536;"	d	file:
+YYNNTS	parser.tab.c	527;"	d	file:
+YYNRULES	parser.tab.c	529;"	d	file:
+YYNSTATES	parser.tab.c	531;"	d	file:
+YYNTOKENS	parser.tab.c	525;"	d	file:
+YYPACT_NINF	parser.tab.c	630;"	d	file:
+YYPOPSTACK	parser.tab.c	1316;"	d	file:
 YYPULL	parser.tab.c	59;"	d	file:
 YYPURE	parser.tab.c	53;"	d	file:
 YYPUSH	parser.tab.c	56;"	d	file:
-YYRECOVERING	parser.tab.c	840;"	d	file:
-YYSIZE_MAXIMUM	parser.tab.c	315;"	d	file:
-YYSIZE_T	parser.tab.c	304;"	d	file:
-YYSIZE_T	parser.tab.c	306;"	d	file:
-YYSIZE_T	parser.tab.c	309;"	d	file:
-YYSIZE_T	parser.tab.c	311;"	d	file:
+YYRECOVERING	parser.tab.c	848;"	d	file:
+YYSIZE_MAXIMUM	parser.tab.c	323;"	d	file:
+YYSIZE_T	parser.tab.c	312;"	d	file:
+YYSIZE_T	parser.tab.c	314;"	d	file:
+YYSIZE_T	parser.tab.c	317;"	d	file:
+YYSIZE_T	parser.tab.c	319;"	d	file:
 YYSKELETON_NAME	parser.tab.c	50;"	d	file:
-YYSTACK_ALLOC	parser.tab.c	390;"	d	file:
-YYSTACK_ALLOC	parser.tab.c	394;"	d	file:
-YYSTACK_ALLOC	parser.tab.c	399;"	d	file:
-YYSTACK_ALLOC	parser.tab.c	422;"	d	file:
-YYSTACK_ALLOC_MAXIMUM	parser.tab.c	419;"	d	file:
-YYSTACK_ALLOC_MAXIMUM	parser.tab.c	425;"	d	file:
-YYSTACK_BYTES	parser.tab.c	467;"	d	file:
-YYSTACK_FREE	parser.tab.c	413;"	d	file:
-YYSTACK_FREE	parser.tab.c	423;"	d	file:
-YYSTACK_GAP_MAXIMUM	parser.tab.c	463;"	d	file:
-YYSTACK_RELOCATE	parser.tab.c	478;"	d	file:
+YYSTACK_ALLOC	parser.tab.c	398;"	d	file:
+YYSTACK_ALLOC	parser.tab.c	402;"	d	file:
+YYSTACK_ALLOC	parser.tab.c	407;"	d	file:
+YYSTACK_ALLOC	parser.tab.c	430;"	d	file:
+YYSTACK_ALLOC_MAXIMUM	parser.tab.c	427;"	d	file:
+YYSTACK_ALLOC_MAXIMUM	parser.tab.c	433;"	d	file:
+YYSTACK_BYTES	parser.tab.c	475;"	d	file:
+YYSTACK_FREE	parser.tab.c	421;"	d	file:
+YYSTACK_FREE	parser.tab.c	431;"	d	file:
+YYSTACK_GAP_MAXIMUM	parser.tab.c	471;"	d	file:
+YYSTACK_RELOCATE	parser.tab.c	486;"	d	file:
 YYSTATE	lex.yy.c	132;"	d	file:
 YYSTYPE	parser.tab.c	/^typedef union YYSTYPE YYSTYPE;$/;"	t	typeref:union:YYSTYPE	file:
 YYSTYPE	parser.tab.c	/^union YYSTYPE$/;"	u	file:
 YYSTYPE	parser.tab.h	/^typedef union YYSTYPE YYSTYPE;$/;"	t	typeref:union:YYSTYPE
 YYSTYPE	parser.tab.h	/^union YYSTYPE$/;"	u
 YYSTYPE	spim/CPU/scanner.h	53;"	d
-YYSTYPE_IS_DECLARED	parser.tab.c	260;"	d	file:
+YYSTYPE_IS_DECLARED	parser.tab.c	268;"	d	file:
 YYSTYPE_IS_DECLARED	parser.tab.h	100;"	d
-YYSTYPE_IS_TRIVIAL	parser.tab.c	259;"	d	file:
+YYSTYPE_IS_TRIVIAL	parser.tab.c	267;"	d	file:
 YYSTYPE_IS_TRIVIAL	parser.tab.h	99;"	d
 YYTABLES_NAME	lex.yy.c	2036;"	d	file:
-YYTABLE_NINF	parser.tab.c	627;"	d	file:
-YYTERROR	parser.tab.c	860;"	d	file:
-YYTOKENTYPE	parser.tab.c	205;"	d	file:
+YYTABLE_NINF	parser.tab.c	635;"	d	file:
+YYTERROR	parser.tab.c	868;"	d	file:
+YYTOKENTYPE	parser.tab.c	213;"	d	file:
 YYTOKENTYPE	parser.tab.h	45;"	d
-YYTRANSLATE	parser.tab.c	530;"	d	file:
-YYUNDEFTOK	parser.tab.c	527;"	d	file:
-YYUSE	parser.tab.c	358;"	d	file:
-YYUSE	parser.tab.c	360;"	d	file:
-YY_	parser.tab.c	321;"	d	file:
-YY_	parser.tab.c	325;"	d	file:
-YY_ATTRIBUTE	parser.tab.c	333;"	d	file:
-YY_ATTRIBUTE	parser.tab.c	335;"	d	file:
-YY_ATTRIBUTE_PURE	parser.tab.c	340;"	d	file:
-YY_ATTRIBUTE_UNUSED	parser.tab.c	344;"	d	file:
+YYTRANSLATE	parser.tab.c	538;"	d	file:
+YYUNDEFTOK	parser.tab.c	535;"	d	file:
+YYUSE	parser.tab.c	366;"	d	file:
+YYUSE	parser.tab.c	368;"	d	file:
+YY_	parser.tab.c	329;"	d	file:
+YY_	parser.tab.c	333;"	d	file:
+YY_ATTRIBUTE	parser.tab.c	341;"	d	file:
+YY_ATTRIBUTE	parser.tab.c	343;"	d	file:
+YY_ATTRIBUTE_PURE	parser.tab.c	348;"	d	file:
+YY_ATTRIBUTE_UNUSED	parser.tab.c	352;"	d	file:
 YY_AT_BOL	lex.yy.c	339;"	d	file:
 YY_BREAK	lex.yy.c	698;"	d	file:
 YY_BUFFER_EOF_PENDING	lex.yy.c	255;"	d	file:
@@ -828,49 +840,49 @@ YY_FLEX_MAJOR_VERSION	lex.yy.c	9;"	d	file:
 YY_FLEX_MINOR_VERSION	lex.yy.c	10;"	d	file:
 YY_FLEX_SUBMINOR_VERSION	lex.yy.c	11;"	d	file:
 YY_FLUSH_BUFFER	lex.yy.c	307;"	d	file:
-YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN	parser.tab.c	365;"	d	file:
-YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN	parser.tab.c	375;"	d	file:
-YY_IGNORE_MAYBE_UNINITIALIZED_END	parser.tab.c	369;"	d	file:
-YY_IGNORE_MAYBE_UNINITIALIZED_END	parser.tab.c	376;"	d	file:
-YY_INITIAL_VALUE	parser.tab.c	372;"	d	file:
-YY_INITIAL_VALUE	parser.tab.c	379;"	d	file:
+YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN	parser.tab.c	373;"	d	file:
+YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN	parser.tab.c	383;"	d	file:
+YY_IGNORE_MAYBE_UNINITIALIZED_END	parser.tab.c	377;"	d	file:
+YY_IGNORE_MAYBE_UNINITIALIZED_END	parser.tab.c	384;"	d	file:
+YY_INITIAL_VALUE	parser.tab.c	380;"	d	file:
+YY_INITIAL_VALUE	parser.tab.c	387;"	d	file:
 YY_INPUT	lex.yy.c	626;"	d	file:
 YY_INT_ALIGNED	lex.yy.c	4;"	d	file:
 YY_LESS_LINENO	lex.yy.c	172;"	d	file:
-YY_LOCATION_PRINT	parser.tab.c	881;"	d	file:
+YY_LOCATION_PRINT	parser.tab.c	889;"	d	file:
 YY_MORE_ADJ	lex.yy.c	519;"	d	file:
 YY_NEW_FILE	lex.yy.c	138;"	d	file:
 YY_NULL	lex.yy.c	112;"	d	file:
-YY_NULLPTR	parser.tab.c	177;"	d	file:
-YY_NULLPTR	parser.tab.c	179;"	d	file:
+YY_NULLPTR	parser.tab.c	185;"	d	file:
+YY_NULLPTR	parser.tab.c	187;"	d	file:
 YY_NUM_RULES	lex.yy.c	371;"	d	file:
 YY_READ_BUF_SIZE	lex.yy.c	608;"	d	file:
 YY_READ_BUF_SIZE	lex.yy.c	610;"	d	file:
-YY_REDUCE_PRINT	parser.tab.c	978;"	d	file:
-YY_REDUCE_PRINT	parser.tab.c	991;"	d	file:
+YY_REDUCE_PRINT	parser.tab.c	986;"	d	file:
+YY_REDUCE_PRINT	parser.tab.c	999;"	d	file:
 YY_RESTORE_YY_MORE_OFFSET	lex.yy.c	520;"	d	file:
 YY_RULE_SETUP	lex.yy.c	701;"	d	file:
 YY_SC_TO_UI	lex.yy.c	119;"	d	file:
-YY_STACK_PRINT	parser.tab.c	947;"	d	file:
-YY_STACK_PRINT	parser.tab.c	990;"	d	file:
+YY_STACK_PRINT	parser.tab.c	955;"	d	file:
+YY_STACK_PRINT	parser.tab.c	998;"	d	file:
 YY_START	lex.yy.c	131;"	d	file:
 YY_START_STACK_INCR	lex.yy.c	668;"	d	file:
 YY_STATE_BUF_SIZE	lex.yy.c	157;"	d	file:
 YY_STATE_EOF	lex.yy.c	135;"	d	file:
 YY_STRUCT_YY_BUFFER_STATE	lex.yy.c	196;"	d	file:
-YY_SYMBOL_PRINT	parser.tab.c	885;"	d	file:
-YY_SYMBOL_PRINT	parser.tab.c	989;"	d	file:
+YY_SYMBOL_PRINT	parser.tab.c	893;"	d	file:
+YY_SYMBOL_PRINT	parser.tab.c	997;"	d	file:
 YY_TYPEDEF_YY_BUFFER_STATE	lex.yy.c	160;"	d	file:
 YY_TYPEDEF_YY_SIZE_T	lex.yy.c	191;"	d	file:
 YY_USER_ACTION	lex.yy.c	693;"	d	file:
 YY_USE_CONST	lex.yy.c	100;"	d	file:
 YY_USE_CONST	lex.yy.c	93;"	d	file:
-YY_YY_PARSER_TAB_H_INCLUDED	parser.tab.c	194;"	d	file:
+YY_YY_PARSER_TAB_H_INCLUDED	parser.tab.c	202;"	d	file:
 YY_YY_PARSER_TAB_H_INCLUDED	parser.tab.h	34;"	d
 _CodeGen_H	codeGen.h	2;"	d
 _IEEE	spim/CPU/run.c	35;"	d	file:
-_Noreturn	parser.tab.c	350;"	d	file:
-_Noreturn	parser.tab.c	352;"	d	file:
+_Noreturn	parser.tab.c	358;"	d	file:
+_Noreturn	parser.tab.c	360;"	d	file:
 __HEADER_H__	header.h	2;"	d
 __STDC_LIMIT_MACROS	lex.yy.c	39;"	d	file:
 __SYMBOL_TABLE_H__	symbolTable.h	2;"	d
@@ -923,7 +935,7 @@ addr_expr_imm	spim/CPU/inst.c	/^addr_expr_imm (addr_expr *expr)$/;"	f
 addr_expr_reg	spim/CPU/inst.c	/^addr_expr_reg (addr_expr *expr)$/;"	f
 addrexpr	spim/CPU/inst.h	/^typedef struct addrexpr$/;"	s
 align_data	spim/CPU/data.c	/^align_data (int alignment)$/;"	f
-alloca	parser.tab.c	397;"	d	file:
+alloca	parser.tab.c	405;"	d	file:
 arrayProperties	symbolTable.h	/^        ArrayProperties arrayProperties;\/\/kind: ARRAY_TYPE_DESCRIPTOR$/;"	m	union:TypeDescriptor::__anon15
 assemble	spim/spim/spim.c	/^bool assemble;			\/* => assemble, write to stdout and exit *\/$/;"	v
 assign_expr	parser.y	/^assign_expr     : ID OP_ASSIGN relop_expr$/;"	l
@@ -984,6 +996,7 @@ copy_imm_expr	spim/CPU/inst.c	/^copy_imm_expr (imm_expr *old_expr)$/;"	f
 copy_inst	spim/CPU/inst.c	/^copy_inst (instruction *inst)$/;"	f
 copy_int_to_stack	spim/CPU/spim-utils.c	/^copy_int_to_stack (int n)$/;"	f	file:
 copy_str_to_stack	spim/CPU/spim-utils.c	/^copy_str_to_stack (char *s)$/;"	f	file:
+curState	codeGen.h	/^    int curState;$/;"	m	class:TagSystem
 currentLevel	symbolTable.h	/^    int currentLevel;$/;"	m	struct:SymbolTable
 current_data_pc	spim/CPU/data.c	/^current_data_pc ()$/;"	f
 current_text_pc	spim/CPU/inst.c	/^current_text_pc ()$/;"	f
@@ -1079,7 +1092,17 @@ g7	pattern/assign.c	/^INT g7[2];$/;"	v
 g8	pattern/assign.c	/^FLOAT g8[2];$/;"	v
 g9	pattern/assign.c	/^INTA g9;$/;"	v
 g_anyErrorOccur	semanticAnalysis.c	/^int g_anyErrorOccur = 0;$/;"	v
+genCondition	codeGen.c	/^int genCondition(AST_NODE *node){$/;"	f
+genDeclareNode	codeGen.c	/^void genDeclareNode(AST_NODE *node){$/;"	f
 genGeneralNode	codeGen.c	/^void genGeneralNode(AST_NODE *node){$/;"	f
+genGeneralNodeWithSibling	codeGen.c	/^void genGeneralNodeWithSibling(AST_NODE *node){$/;"	f
+genIfStmt	codeGen.c	/^void genIfStmt(AST_NODE *node){$/;"	f
+genReturnStmt	codeGen.c	/^void genReturnStmt(AST_NODE *node){$/;"	f
+genStmtNode	codeGen.c	/^void genStmtNode(AST_NODE *node){$/;"	f
+genVariableWithInit	gen-part.cpp	/^void genVariableWithInit(bool first, C_type c, const char* name, int a, double d) {$/;"	f
+gen_epilogue	gen-part.cpp	/^void gen_epilogue(const char *functionName, int offset) {$/;"	f
+gen_head	gen-part.cpp	/^int gen_head(const char *name) {$/;"	f
+gen_prologue	gen-part.cpp	/^void gen_prologue(const char *functionName) {$/;"	f
 getBiggerType	semanticAnalysis.c	/^DATA_TYPE getBiggerType(DATA_TYPE dataType1, DATA_TYPE dataType2)$/;"	f
 getBinaryOp	header.h	/^        BINARY_OPERATOR getBinaryOp() {$/;"	f	class:AST_NODE
 getCharPtrValue	header.h	/^        char* getCharPtrValue() {$/;"	f	class:AST_NODE
@@ -1088,11 +1111,14 @@ getConIntValue	header.h	/^        int getConIntValue() {$/;"	f	class:AST_NODE
 getConType	header.h	/^        C_type getConType() {$/;"	f	class:AST_NODE
 getDataType	header.h	/^        DATA_TYPE getDataType() {$/;"	f	class:AST_NODE
 getDeclKind	header.h	/^        DECL_KIND getDeclKind() {$/;"	f	class:AST_NODE
+getEndTag	codeGen.h	/^    const char* getEndTag(AST_NODE *node){$/;"	f	class:TagSystem
 getExprKind	header.h	/^        EXPR_KIND getExprKind() {$/;"	f	class:AST_NODE
 getExprOrConstValue	semanticAnalysis.c	/^void getExprOrConstValue(AST_NODE* exprOrConstNode, int* iValue, float* fValue)$/;"	f
 getIDKind	header.h	/^        IDENTIFIER_KIND getIDKind() {$/;"	f	class:AST_NODE
 getIDName	header.h	/^        const char* getIDName() {$/;"	f	class:AST_NODE
+getReg	gen-part.cpp	/^int getReg() {$/;"	f
 getStmtType	header.h	/^        STMT_KIND getStmtType(){$/;"	f	class:AST_NODE
+getTag	codeGen.h	/^    const char* getTag(AST_NODE *node) {$/;"	f	class:TagSystem
 get_console_char	spim/spim/spim.c	/^get_console_char ()$/;"	f
 get_hash	spim/CPU/sym-tbl.c	/^get_hash (char *name, int *slot_no, label **entry)$/;"	f	file:
 get_opt_int	spim/spim/spim.c	/^get_opt_int ()$/;"	f	file:
@@ -1113,6 +1139,8 @@ i_type_inst_full_word	spim/CPU/inst.c	/^i_type_inst_full_word (int opcode, int r
 id_list	parser.y	/^id_list		: ID$/;"	l
 identifierName	header.h	/^    char *identifierName;$/;"	m	struct:IdentifierSemanticValue
 identifierSemanticValue	header.h	/^            IdentifierSemanticValue identifierSemanticValue;$/;"	m	union:AST_NODE::__anon14
+ifCascade	codeGen.h	/^    int ifCascade;$/;"	m	class:TagSystem
+ifScope	codeGen.h	/^    int ifScope;$/;"	m	class:TagSystem
 imm	spim/CPU/inst.h	/^	      short imm;$/;"	m	union:inst_s::__anon2::__anon3::__anon4
 imm	spim/CPU/inst.h	/^  imm_expr *imm;		\/* The immediate part *\/$/;"	m	struct:addrexpr
 imm_expr	spim/CPU/inst.h	/^} imm_expr;$/;"	t	typeref:struct:immexpr
@@ -1190,12 +1218,13 @@ load_exception_handler	spim/spim/spim.c	/^static bool load_exception_handler = t
 local_labels	spim/CPU/sym-tbl.c	/^static label *local_labels = NULL; \/* Labels local to current file. *\/$/;"	v	file:
 lookup_label	spim/CPU/sym-tbl.c	/^lookup_label (char *name)$/;"	f
 lower_bits_of_expr	spim/CPU/inst.c	/^lower_bits_of_expr (imm_expr *old_expr)$/;"	f
-main	parser.tab.c	/^main (argc, argv)$/;"	f
+main	parser.tab.c	/^int main (int argc, char *argv[]){$/;"	f
 main	pattern/assign.c	/^int main() {$/;"	f
 main	pattern/control.c	/^int main() {$/;"	f
 main	pattern/expr.c	/^int main() {$/;"	f
 main	pattern/func.c	/^int main() {$/;"	f
 main	pattern/io.c	/^int main() {$/;"	f
+main	pattern/test.c	/^int main(){$/;"	f
 main	spim/CPU/dump_ops.c	/^main (int argc, char** argv)$/;"	f
 main	spim/spim/spim.c	/^main (int argc, char **argv)$/;"	f
 makeChild	parser.tab.c	/^static inline AST_NODE* makeChild(AST_NODE *parent, AST_NODE *child)$/;"	f	file:
@@ -1253,6 +1282,7 @@ node	parser.tab.h	/^	AST_NODE  *node;$/;"	m	union:YYSTYPE
 nodeType	header.h	/^        AST_TYPE nodeType;$/;"	m	class:AST_NODE
 nonempty_assign_expr_list	parser.y	/^nonempty_assign_expr_list        : nonempty_assign_expr_list MK_COMMA assign_expr$/;"	l
 nonempty_relop_expr_list	parser.y	/^nonempty_relop_expr_list	: nonempty_relop_expr_list MK_COMMA relop_expr$/;"	l
+notice	codeGen.h	/^    void notice(const TagSignal sig){$/;"	f	class:TagSystem
 offset	spim/CPU/inst.h	/^  int offset;			\/* Offset from symbol *\/$/;"	m	struct:immexpr
 ok_pc	spim/CPU/exceptions.s	/^ok_pc:$/;"	l
 op	header.h	/^    } op;$/;"	m	struct:EXPRSemanticValue	typeref:union:EXPRSemanticValue::__anon12
@@ -1284,7 +1314,7 @@ printErrorMsg	semanticAnalysis.c	/^void printErrorMsg(AST_NODE* node, ErrorMsgKi
 printErrorMsgSpecial	semanticAnalysis.c	/^void printErrorMsgSpecial(AST_NODE* node1, char* name2, ErrorMsgKind errorMsgKind)$/;"	f
 printGV	functions.c	/^void printGV(AST_NODE *root, char* fileName)$/;"	f
 printGVNode	functions.c	/^int printGVNode(FILE *fp, AST_NODE* node, int count)$/;"	f
-printLabelString	functions.c	/^char *printLabelString(FILE *fp, AST_NODE *astNode)$/;"	f
+printLabelString	functions.c	/^void printLabelString(FILE *fp, AST_NODE *astNode)$/;"	f
 print_all_regs	spim/spim/spim.c	/^print_all_regs (int hex_flag)$/;"	f	file:
 print_fp_reg	spim/spim/spim.c	/^print_fp_reg (int reg_no)$/;"	f	file:
 print_inst	spim/CPU/inst.c	/^print_inst (mem_addr addr)$/;"	f
@@ -1339,6 +1369,7 @@ recv_buffer	spim/CPU/mem.c	/^static int recv_buffer;$/;"	v	file:
 recv_buffer_full_timer	spim/CPU/mem.c	/^static int recv_buffer_full_timer = 0;$/;"	v	file:
 recv_control	spim/CPU/mem.c	/^static int recv_control = 0;	\/* No input *\/$/;"	v	file:
 reg_no	spim/CPU/inst.h	/^  unsigned char reg_no;		\/* Register number *\/$/;"	m	struct:addrexpr
+reg_number	gen-part.cpp	/^int reg_number = 0;$/;"	v
 reg_word	spim/CPU/reg.h	/^typedef int32 \/*@alt unsigned int @*\/ reg_word;$/;"	t
 rel_op	parser.y	/^rel_op		: OP_EQ$/;"	l
 relop_expr	parser.y	/^relop_expr	: relop_term$/;"	l
@@ -1384,7 +1415,7 @@ set_mem_inst	spim/CPU/mem.c	/^set_mem_inst(mem_addr addr, instruction* inst)$/;"
 set_mem_word	spim/CPU/mem.c	/^set_mem_word(mem_addr addr, reg_word value)$/;"	f
 set_text_pc	spim/CPU/inst.c	/^set_text_pc (mem_addr addr)$/;"	f
 shamt	spim/CPU/inst.h	/^		  unsigned char shamt;$/;"	m	struct:inst_s::__anon2::__anon3::__anon4::__anon5
-short	parser.tab.c	275;"	d	file:
+short	parser.tab.c	283;"	d	file:
 signed_multiply	spim/CPU/run.c	/^signed_multiply (reg_word v1, reg_word v2)$/;"	f	file:
 sizeInEachDimension	symbolTable.h	/^    int sizeInEachDimension[MAX_ARRAY_DIMENSION];$/;"	m	struct:ArrayProperties
 sort_a_opcode_table	spim/CPU/inst.c	/^sort_a_opcode_table ()$/;"	f	file:
@@ -1427,6 +1458,9 @@ symbol	spim/CPU/inst.h	/^  struct lab *symbol;		\/* Symbolic label *\/$/;"	m	str
 symbolTable	symbolTable.c	/^SymbolTable symbolTable;$/;"	v
 symbolTableEnd	symbolTable.c	/^void symbolTableEnd()$/;"	f
 symbolTableEntry	header.h	/^    struct SymbolTableEntry *symbolTableEntry;$/;"	m	struct:IdentifierSemanticValue	typeref:struct:IdentifierSemanticValue::SymbolTableEntry
+tag	codeGen.h	/^    char tag[1024];$/;"	m	class:TagSystem
+tagState	codeGen.h	/^    enum tagState{$/;"	g	class:TagSystem
+tagsystem	codeGen.c	/^TagSystem tagsystem;$/;"	v
 target	spim/CPU/inst.h	/^      mem_addr target;$/;"	m	union:inst_s::__anon2
 term	parser.y	/^term		: term mul_op factor$/;"	l
 test	parser.y	/^test		: assign_expr$/;"	l
@@ -1534,7 +1568,7 @@ yyalloc	lex.yy.c	/^void *yyalloc (yy_size_t  size )$/;"	f
 yyalloc	parser.tab.c	/^union yyalloc$/;"	u	file:
 yychar	parser.tab.c	/^int yychar;$/;"	v
 yycheck	parser.tab.c	/^static const yytype_int16 yycheck[] =$/;"	v	file:
-yyclearin	parser.tab.c	831;"	d	file:
+yyclearin	parser.tab.c	839;"	d	file:
 yyconst	lex.yy.c	106;"	d	file:
 yyconst	lex.yy.c	108;"	d	file:
 yydebug	parser.tab.c	/^int yydebug;$/;"	v
@@ -1542,8 +1576,9 @@ yydefact	parser.tab.c	/^static const yytype_uint8 yydefact[] =$/;"	v	file:
 yydefgoto	parser.tab.c	/^static const yytype_int16 yydefgoto[] =$/;"	v	file:
 yydestruct	parser.tab.c	/^yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)$/;"	f	file:
 yyensure_buffer_stack	lex.yy.c	/^static void yyensure_buffer_stack (void)$/;"	f	file:
-yyerrok	parser.tab.c	830;"	d	file:
-yyerror	parser.tab.c	/^int yyerror (mesg)$/;"	f
+yyerrok	parser.tab.c	838;"	d	file:
+yyerror	parser.tab.c	/^int yyerror (char *mesg){$/;"	f
+yyerror	parser.tab.c	/^void yyerror(const char *msg){$/;"	f
 yyfree	lex.yy.c	/^void yyfree (void * ptr )$/;"	f
 yyget_debug	lex.yy.c	/^int yyget_debug  (void)$/;"	f
 yyget_in	lex.yy.c	/^FILE *yyget_in  (void)$/;"	f
@@ -1565,7 +1600,7 @@ yymore	lex.yy.c	518;"	d	file:
 yynerrs	parser.tab.c	/^int yynerrs;$/;"	v
 yyout	lex.yy.c	/^FILE *yyin = (FILE *) 0, *yyout = (FILE *) 0;$/;"	v
 yypact	parser.tab.c	/^static const yytype_int16 yypact[] =$/;"	v	file:
-yypact_value_is_default	parser.tab.c	624;"	d	file:
+yypact_value_is_default	parser.tab.c	632;"	d	file:
 yyparse	parser.tab.c	/^yyparse (void)$/;"	f
 yypgoto	parser.tab.c	/^static const yytype_int16 yypgoto[] =$/;"	v	file:
 yypop_buffer_state	lex.yy.c	/^void yypop_buffer_state (void)$/;"	f
@@ -1582,12 +1617,12 @@ yyset_out	lex.yy.c	/^void yyset_out (FILE *  out_str )$/;"	f
 yyss_alloc	parser.tab.c	/^  yytype_int16 yyss_alloc;$/;"	m	union:yyalloc	file:
 yystos	parser.tab.c	/^static const yytype_uint8 yystos[] =$/;"	v	file:
 yystpcpy	parser.tab.c	/^yystpcpy (char *yydest, const char *yysrc)$/;"	f	file:
-yystpcpy	parser.tab.c	1032;"	d	file:
+yystpcpy	parser.tab.c	1040;"	d	file:
 yystrlen	parser.tab.c	/^yystrlen (const char *yystr)$/;"	f	file:
-yystrlen	parser.tab.c	1016;"	d	file:
+yystrlen	parser.tab.c	1024;"	d	file:
 yysyntax_error	parser.tab.c	/^yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,$/;"	f	file:
 yytable	parser.tab.c	/^static const yytype_int16 yytable[] =$/;"	v	file:
-yytable_value_is_error	parser.tab.c	629;"	d	file:
+yytable_value_is_error	parser.tab.c	637;"	d	file:
 yyterminate	lex.yy.c	663;"	d	file:
 yytext	lex.yy.c	/^char *yytext;$/;"	v
 yytext_ptr	lex.yy.c	354;"	d	file:
