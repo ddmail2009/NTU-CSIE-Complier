@@ -268,10 +268,19 @@ class AST_NODE {
             assert(type() == EXPR_NODE);
             return semantic_value.exprSemanticValue.binaryOp();
         }
-        
+
         const char* getIDName() {
             assert(type() == IDENTIFIER_NODE);
             return semantic_value.identifierSemanticValue.name();
+        }
+
+        SymbolAttribute *getSymbolAttr(){
+          return getSymbol()->attribute;
+        }
+
+        SymbolTableEntry *getSymbol(){
+          assert(type() == IDENTIFIER_NODE);
+          return semantic_value.identifierSemanticValue.symbolTableEntry;
         }
 };
 
