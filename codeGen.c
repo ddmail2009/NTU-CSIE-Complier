@@ -6,6 +6,7 @@
 
 #include "codeGen.h"
 #include "header.h"
+#include "symbolTable.h"
 #include "gen-part.cpp"
 FILE *f;
 
@@ -42,15 +43,39 @@ void getTagName(const char *prefix, AST_NODE *node, char *name){
 void codeGen(AST_NODE* prog){
   f = fopen("test.output", "w");
   DebugInfo(prog, "start codeGen");
-  genGeneralNode(prog);
+  genGeneralNodeWithSibling(prog);
   DebugInfo(prog, "end codeGen");
 }
 
+void genVaraibleDeclNode(AST_NODE *node){
+  AST_NODE *typeNode = node->child;
+  AST_NODE *IDNode = typeNode->rightSibling;
+
+  while(IDNode){
+    SymbolTableEntry *entry = IDNode->getSymbol();
+    bool isGlobal = entry->nestingLevel == 0 ? true : false;
+    const char *IDName = entry->name;
+
+    switch(IDNode->getIDKind()){
+      case NORMAL_ID:
+        DebugInfo(node, "normalID dataType: %d, IDName: %s", node->dataType, IDName);
+        if(isGlobal)
+          //genGlobalVariableWithInit(node->dataType, IDName);
+        break;
+      case ARRAY_ID:
+        break;
+      case WITH_INIT_ID:
+        break;
+    }
+    IDNode = IDNode->rightSibling;
+  }
+}
 
 void genDeclareNode(AST_NODE *node){
   DebugInfo(node, "gen declare node");
   switch(node->getDeclKind()){
     case VARIABLE_DECL:
+      genVaraibleDeclNode(node);
       break;
     case TYPE_DECL:
       break;

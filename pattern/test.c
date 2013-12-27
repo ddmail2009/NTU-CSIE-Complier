@@ -1,10 +1,8 @@
-int main(){
-  if(1==2) 
-  {
-    return 1;
-  } 
+int i;
 
-  while(1==3){
+int main(){
+  int i;
+  for(i=2; i<3; i=i+1){
     write(1);
   }
 }

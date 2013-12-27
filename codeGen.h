@@ -5,6 +5,7 @@
 #include <vector>
 
 // GenSpecific Type Node
+void genVaraibleDeclNode(AST_NODE *node);
 void genIfStmt(AST_NODE *node);
 void genWhileStmt(AST_NODE* node);
 void genForStmt(AST_NODE* node);
