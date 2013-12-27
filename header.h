@@ -4,284 +4,263 @@
 #include <assert.h>
 #define MAX_ARRAY_DIMENSION 10
 
-typedef enum DATA_TYPE
-{
-    INT_TYPE,
-    FLOAT_TYPE,
-    VOID_TYPE,
-    INT_PTR_TYPE,//for parameter passing
-    FLOAT_PTR_TYPE,//for parameter passing
-    CONST_STRING_TYPE,//for "const string"
-    NONE_TYPE,//for nodes like PROGRAM_NODE which has no type
-    ERROR_TYPE
+typedef enum DATA_TYPE{
+  INT_TYPE,
+  FLOAT_TYPE,
+  VOID_TYPE,
+  INT_PTR_TYPE,//for parameter passing
+  FLOAT_PTR_TYPE,//for parameter passing
+  CONST_STRING_TYPE,//for "const string"
+  NONE_TYPE,//for nodes like PROGRAM_NODE which has no type
+  ERROR_TYPE
 } DATA_TYPE;
 
-typedef enum IDENTIFIER_KIND
-{
-    NORMAL_ID, //function Name, uninitialized scalar variable
-    ARRAY_ID, //ID_NODE->child = dim
-    WITH_INIT_ID, //ID_NODE->child = initial value
+typedef enum IDENTIFIER_KIND{
+  NORMAL_ID, //function Name, uninitialized scalar variable
+  ARRAY_ID, //ID_NODE->child = dim
+  WITH_INIT_ID, //ID_NODE->child = initial value
 } IDENTIFIER_KIND;
 
-typedef enum BINARY_OPERATOR
-{
-    BINARY_OP_ADD,
-    BINARY_OP_SUB,
-    BINARY_OP_MUL,
-    BINARY_OP_DIV,
-    BINARY_OP_EQ,
-    BINARY_OP_GE,
-    BINARY_OP_LE,
-    BINARY_OP_NE,
-    BINARY_OP_GT,
-    BINARY_OP_LT,
-    BINARY_OP_AND,
-    BINARY_OP_OR
+typedef enum BINARY_OPERATOR{
+  BINARY_OP_ADD,
+  BINARY_OP_SUB,
+  BINARY_OP_MUL,
+  BINARY_OP_DIV,
+  BINARY_OP_EQ,
+  BINARY_OP_GE,
+  BINARY_OP_LE,
+  BINARY_OP_NE,
+  BINARY_OP_GT,
+  BINARY_OP_LT,
+  BINARY_OP_AND,
+  BINARY_OP_OR
 } BINARY_OPERATOR;
 
-typedef enum UNARY_OPERATOR
-{
-    UNARY_OP_POSITIVE,
-    UNARY_OP_NEGATIVE,
-    UNARY_OP_LOGICAL_NEGATION
+typedef enum UNARY_OPERATOR{
+  UNARY_OP_POSITIVE,
+  UNARY_OP_NEGATIVE,
+  UNARY_OP_LOGICAL_NEGATION
 } UNARY_OPERATOR;
 
 //C_type= type of constant ex: 1, 3.3, "const string"
 //do not modify, or lexer might break
 typedef enum C_type {
-    INTEGERC,
-    FLOATC,
-    STRINGC
+  INTEGERC,
+  FLOATC,
+  STRINGC
 } C_type;
 
-typedef enum STMT_KIND
-{
-    WHILE_STMT,
-    FOR_STMT,
-    ASSIGN_STMT, //TODO:for simpler implementation, assign_expr also uses this
-    IF_STMT,
-    FUNCTION_CALL_STMT,
-    RETURN_STMT,
+typedef enum STMT_KIND{
+  WHILE_STMT,
+  FOR_STMT,
+  ASSIGN_STMT, //TODO:for simpler implementation, assign_expr also uses this
+  IF_STMT,
+  FUNCTION_CALL_STMT,
+  RETURN_STMT,
 } STMT_KIND;
 
-typedef enum EXPR_KIND
-{
-    BINARY_OPERATION,
-    UNARY_OPERATION
+typedef enum EXPR_KIND{
+  BINARY_OPERATION,
+  UNARY_OPERATION
 } EXPR_KIND;
 
-typedef enum DECL_KIND
-{
-    VARIABLE_DECL,
-    TYPE_DECL,
-    FUNCTION_DECL,
-    FUNCTION_PARAMETER_DECL
+typedef enum DECL_KIND{
+  VARIABLE_DECL,
+  TYPE_DECL,
+  FUNCTION_DECL,
+  FUNCTION_PARAMETER_DECL
 } DECL_KIND;
 
-typedef enum AST_TYPE
-{
-    PROGRAM_NODE,
-    DECLARATION_NODE,
-    IDENTIFIER_NODE,
-    PARAM_LIST_NODE,
-    NUL_NODE,
-    BLOCK_NODE,
-    VARIABLE_DECL_LIST_NODE,
-    STMT_LIST_NODE,
-    STMT_NODE,
-    EXPR_NODE,
-    CONST_VALUE_NODE, //ex:1, 2, "constant string"
-    NONEMPTY_ASSIGN_EXPR_LIST_NODE,
-    NONEMPTY_RELOP_EXPR_LIST_NODE
+typedef enum AST_TYPE{
+  PROGRAM_NODE,
+  DECLARATION_NODE,
+  IDENTIFIER_NODE,
+  PARAM_LIST_NODE,
+  NUL_NODE,
+  BLOCK_NODE,
+  VARIABLE_DECL_LIST_NODE,
+  STMT_LIST_NODE,
+  STMT_NODE,
+  EXPR_NODE,
+  CONST_VALUE_NODE, //ex:1, 2, "constant string"
+  NONEMPTY_ASSIGN_EXPR_LIST_NODE,
+  NONEMPTY_RELOP_EXPR_LIST_NODE
 } AST_TYPE;
 
 //*************************
 // AST_NODE's semantic value
 //*************************
 
-typedef struct STMTSemanticValue
-{
-    STMT_KIND kind;
+typedef struct STMTSemanticValue{
+  STMT_KIND kind;
 } STMTSemanticValue;
 
-typedef struct EXPRSemanticValue
-{
-    EXPR_KIND kind;
-    
-    int isConstEval;
+typedef struct EXPRSemanticValue{
+  EXPR_KIND kind;
 
-    union
-    {
-        int iValue;
-        float fValue;
-    } constEvalValue;
+  int isConstEval;
 
-    union
-    {
-        BINARY_OPERATOR binaryOp;
-        UNARY_OPERATOR unaryOp;
-    } op;
+  union{
+    int iValue;
+    float fValue;
+  } constEvalValue;
 
-    BINARY_OPERATOR binaryOp() {
-        assert(kind == BINARY_OPERATION);
-        return op.binaryOp;
-    }
+  union{
+    BINARY_OPERATOR binaryOp;
+    UNARY_OPERATOR unaryOp;
+  } op;
 
-    UNARY_OPERATOR unaryOp() {
-        assert(kind == UNARY_OPERATION);
-        return op.unaryOp;
-    }
+  BINARY_OPERATOR binaryOp() {
+    assert(kind == BINARY_OPERATION);
+    return op.binaryOp;
+  }
+
+  UNARY_OPERATOR unaryOp() {
+    assert(kind == UNARY_OPERATION);
+    return op.unaryOp;
+  }
 } EXPRSemanticValue;
 
-typedef struct DECLSemanticValue
-{
-    DECL_KIND kind;
+typedef struct DECLSemanticValue{
+  DECL_KIND kind;
 } DECLSemanticValue;
 
-struct SymbolAttribute;
+typedef struct IdentifierSemanticValue{
+  char *identifierName;
+  struct SymbolTableEntry *symbolTableEntry;
+  IDENTIFIER_KIND kind;
 
-typedef struct IdentifierSemanticValue
-{
-    char *identifierName;
-    struct SymbolTableEntry *symbolTableEntry;
-    IDENTIFIER_KIND kind;
-
-    const char* name() {
-        return identifierName;
-    }
+  const char* name() {
+    return identifierName;
+  }
 } IdentifierSemanticValue;
 
-typedef struct TypeSpecSemanticValue
-{
-    char *typeName;
+typedef struct TypeSpecSemanticValue{
+  char *typeName;
 } TypeSpecSemanticValue;
 
 //don't modify or lexer may break
 typedef struct CON_Type{
-    C_type  const_type;
-	union {
-		int     intval;
-		double  fval;
-		char    *sc; 
-    } const_u;
+  C_type  const_type;
+  union {
+    int     intval;
+    double  fval;
+    char    *sc; 
+  } const_u;
 
-    C_type type() {
-        return const_type;
-    }
-    int Int() {
-        assert(type() == INTEGERC);
-        return const_u.intval;
-    }
-    double Double() {
-        assert(type() == FLOATC);
-        return const_u.fval;
-    }
-    char* Char() {
-        assert(type() == INTEGERC);
-        return const_u.sc;
-    }
+  C_type type() {
+    return const_type;
+  }
+  int Int() {
+    assert(type() == INTEGERC);
+    return const_u.intval;
+  }
+  double Double() {
+    assert(type() == FLOATC);
+    return const_u.fval;
+  }
+  char* Char() {
+    assert(type() == INTEGERC);
+    return const_u.sc;
+  }
 } CON_Type;
 
 
 class AST_NODE {
-    public:
-        struct AST_NODE *child;
-        struct AST_NODE *parent;
-        struct AST_NODE *rightSibling;
-        struct AST_NODE *leftmostSibling;
-        AST_TYPE nodeType;
-        DATA_TYPE dataType;
-        int linenumber;
-        union {
-            IdentifierSemanticValue identifierSemanticValue;
-            STMTSemanticValue stmtSemanticValue;
-            DECLSemanticValue declSemanticValue;
-            EXPRSemanticValue exprSemanticValue;
-            CON_Type *const1;
-        } semantic_value;
+  public:
+    struct AST_NODE *child;
+    struct AST_NODE *parent;
+    struct AST_NODE *rightSibling;
+    struct AST_NODE *leftmostSibling;
+    AST_TYPE nodeType;
+    DATA_TYPE dataType;
+    int linenumber;
+    union {
+      IdentifierSemanticValue identifierSemanticValue;
+      STMTSemanticValue stmtSemanticValue;
+      DECLSemanticValue declSemanticValue;
+      EXPRSemanticValue exprSemanticValue;
+      CON_Type *const1;
+    } semantic_value;
 
-        void visit();
+    void visit();
 
-        void setSymbolTableEntry(SymbolTableEntry *entry){
-            assert(type() == IDENTIFIER_NODE);
-            semantic_value.identifierSemanticValue.symbolTableEntry = entry;
-        }
+    void setSymbolTableEntry(SymbolTableEntry *entry){
+      assert(type() == IDENTIFIER_NODE);
+      semantic_value.identifierSemanticValue.symbolTableEntry = entry;
+    }
 
-        AST_TYPE type() {
-            return nodeType;
-        }
+    AST_TYPE type() {
+      return nodeType;
+    }
 
-        float processExprOp(int, int);
-        float processExprOp(int, float);
-        float processExprOp(float, int);
-        float processExprOp(float, float);
+    float processExprOp(int, int);
+    float processExprOp(int, float);
+    float processExprOp(float, int);
+    float processExprOp(float, float);
 
-        DATA_TYPE getDataType() {
-            return dataType;
-        }
+    DATA_TYPE getDataType() {
+      return dataType;
+    }
 
-        void setDataType(DATA_TYPE type){
-            dataType = type;
-        }
+    void setDataType(DATA_TYPE type){
+      dataType = type;
+    }
 
-        STMT_KIND getStmtType(){
-            assert(type() == STMT_NODE);
-            return semantic_value.stmtSemanticValue.kind;
-        }
+    STMT_KIND getStmtType(){
+      assert(type() == STMT_NODE);
+      return semantic_value.stmtSemanticValue.kind;
+    }
 
-        C_type getConType() {
-            assert(type() == CONST_VALUE_NODE);
-            return semantic_value.const1->type();
-        }
+    C_type getConType() {
+      assert(type() == CONST_VALUE_NODE);
+      return semantic_value.const1->type();
+    }
 
-        int getConIntValue() {
-            assert(getConType() == INTEGERC);
-            return semantic_value.const1->const_u.intval;
-        }
+    int getConIntValue() {
+      assert(getConType() == INTEGERC);
+      return semantic_value.const1->const_u.intval;
+    }
 
-        double getConFloatValue() {
-            assert(getConType() == FLOATC);
-            return semantic_value.const1->const_u.fval;
-        }
+    double getConFloatValue() {
+      assert(getConType() == FLOATC);
+      return semantic_value.const1->const_u.fval;
+    }
 
-        char* getCharPtrValue() {
-            assert(getConType() == STRINGC);
-            return semantic_value.const1->const_u.sc;
-        }
+    char* getCharPtrValue() {
+      assert(getConType() == STRINGC);
+      return semantic_value.const1->const_u.sc;
+    }
 
-        DECL_KIND getDeclKind() {
-            assert(type() == DECLARATION_NODE);
-            return semantic_value.declSemanticValue.kind;
-        }
+    DECL_KIND getDeclKind() {
+      assert(type() == DECLARATION_NODE);
+      return semantic_value.declSemanticValue.kind;
+    }
 
-        IDENTIFIER_KIND getIDKind() {
-            assert(type() == IDENTIFIER_NODE);
-            return semantic_value.identifierSemanticValue.kind;
-        }
+    IDENTIFIER_KIND getIDKind() {
+      assert(type() == IDENTIFIER_NODE);
+      return semantic_value.identifierSemanticValue.kind;
+    }
 
-        EXPR_KIND getExprKind() {
-            assert(type() == EXPR_NODE);
-            return semantic_value.exprSemanticValue.kind;
-        }
+    EXPR_KIND getExprKind() {
+      assert(type() == EXPR_NODE);
+      return semantic_value.exprSemanticValue.kind;
+    }
 
-        BINARY_OPERATOR getBinaryOp() {
-            assert(type() == EXPR_NODE);
-            return semantic_value.exprSemanticValue.binaryOp();
-        }
+    BINARY_OPERATOR getBinaryOp() {
+      assert(type() == EXPR_NODE);
+      return semantic_value.exprSemanticValue.binaryOp();
+    }
 
-        const char* getIDName() {
-            assert(type() == IDENTIFIER_NODE);
-            return semantic_value.identifierSemanticValue.name();
-        }
+    const char* getIDName() {
+      assert(type() == IDENTIFIER_NODE);
+      return semantic_value.identifierSemanticValue.name();
+    }
 
-        SymbolAttribute *getSymbolAttr(){
-          return getSymbol()->attribute;
-        }
-
-        SymbolTableEntry *getSymbol(){
-          assert(type() == IDENTIFIER_NODE);
-          return semantic_value.identifierSemanticValue.symbolTableEntry;
-        }
+    SymbolTableEntry *getSymbol(){
+      assert(type() == IDENTIFIER_NODE);
+      return semantic_value.identifierSemanticValue.symbolTableEntry;
+    }
 };
 
 struct SymbolTable;
