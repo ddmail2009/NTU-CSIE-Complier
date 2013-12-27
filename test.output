@@ -6,47 +6,36 @@ add	$fp,$sp,-4
 add	$sp,$sp,-8
 lw	$2, _framesize_main
 sub	$sp,$sp,$2
+sw	$8,32($sp)
+sw	$9,28($sp)
+sw	$10,24($sp)
+sw	$11,20($sp)
+sw	$12,16($sp)
+sw	$13,12($sp)
+sw	$14,8($sp)
+sw	$15,4($sp)
 _begin_main:
-li	$9, 2
-li	$10, 1
-seq	$10, $8, $9
-beqz	$10, _Branch_2_9
-li	$9, 1
-move	$v0, $9
+load variable and compare here
+move	$v0, $1
 j	_end_main
-j	_End_IF_2_9
-_Branch_2_9:
-li	$9, 2
-li	$10, 1
-seq	$10, $8, $9
-beqz	$10, _Branch_6_9
-li	$9, 2
-li	$10, 1
-seq	$10, $8, $9
-beqz	$10, _Branch_8_10
-li	$9, 1
-move	$v0, $9
-j	_end_main
-j	_End_IF_8_10
-_Branch_8_10:
-li	$9, 1
-move	$v0, $9
-j	_end_main
-_End_IF_8_10:
-li	$9, 1
-move	$v0, $9
-j	_end_main
-j	_End_IF_6_9
-_Branch_6_9:
-li	$9, 1
-move	$v0, $9
-j	_end_main
-_End_IF_6_9:
-_End_IF_2_9:
+_WHILE_7_9:
+load variable and compare here
+beqz	$1, _End_WHILE_7_9
+j	_WHILE_7_9
+_End_WHILE_7_9:
 _end_main:
+lw	$8,32($sp)
+lw	$9,28($sp)
+lw	$10,24($sp)
+lw	$11,20($sp)
+lw	$12,16($sp)
+lw	$13,12($sp)
+lw	$14,8($sp)
+lw	$15,4($sp)
 lw	$ra, 4($fp)
 add	$sp, $fp, 4
 lw	$fp, 0($fp)
-li	$v0, 10
+#exit system call
+li	v0 10
 syscall
 _framesize_main: .word 0

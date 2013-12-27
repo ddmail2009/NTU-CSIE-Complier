@@ -35,6 +35,10 @@ void CodeGenStream(const char *format, ...){
   fprintf(stdout, output);
 }
 
+void getTagName(const char *prefix, AST_NODE *node, char *name){
+  sprintf(name, "%s_%d_%d", prefix, node->linenumber, node->type());
+}
+
 void codeGen(AST_NODE* prog){
   f = fopen("test.output", "w");
   DebugInfo(prog, "start codeGen");
@@ -42,7 +46,6 @@ void codeGen(AST_NODE* prog){
   DebugInfo(prog, "end codeGen");
 }
 
-char FunctionEndTag[1024];
 
 void genDeclareNode(AST_NODE *node){
   DebugInfo(node, "gen declare node");
@@ -56,7 +59,6 @@ void genDeclareNode(AST_NODE *node){
         AST_NODE *nameNode = node->child->rightSibling;
         gen_head(nameNode->getIDName());
         gen_prologue(nameNode->getIDName());
-        sprintf(FunctionEndTag, "_end_%s", nameNode->getIDName());
         genGeneralNodeWithSibling(node->child);
         gen_epilogue(nameNode->getIDName(), 0);
       }
@@ -74,8 +76,10 @@ void genStmtNode(AST_NODE *node){
   else {
     switch(node->getStmtType()){
       case WHILE_STMT:
+        genWhileStmt(node);
         break;
       case FOR_STMT:
+        genForStmt(node);
         break;
       case ASSIGN_STMT:
         break;
@@ -93,9 +97,48 @@ void genStmtNode(AST_NODE *node){
   }
 }
 
+void genForStmt(AST_NODE* node){
+  DebugInfo(node->child, "gen For stmt");
+
+  char ForStmtTag[1024];
+  getTagName("_FOR", node->child, ForStmtTag);
+
+  AST_NODE *initNode = node->child;
+  AST_NODE *conditionNode = initNode->rightSibling;
+  AST_NODE *stepNode = conditionNode->rightSibling;
+  AST_NODE *blockNode = stepNode->rightSibling;
+
+  genGeneralNode(initNode);
+  CodeGenStream("%s:", ForStmtTag);
+  int reg = genCondition(conditionNode);
+  CodeGenStream("beqz\t$%d, _End%s", reg, ForStmtTag);
+  genGeneralNode(stepNode);
+  genGeneralNode(blockNode);
+  CodeGenStream("j\t%s", ForStmtTag);
+  CodeGenStream("_End%s:", ForStmtTag);
+}
+
+void genWhileStmt(AST_NODE* node){
+  DebugInfo(node->child, "gen While stmt");
+
+  char WhileStmtTag[1024];
+  getTagName("_WHILE", node->child, WhileStmtTag);
+
+  AST_NODE *conditionNode = node->child;
+  AST_NODE *blockNode = conditionNode->rightSibling;
+
+  CodeGenStream("%s:", WhileStmtTag);
+  int reg = genCondition(conditionNode);
+  CodeGenStream("beqz\t$%d, _End%s", reg, WhileStmtTag);
+  genGeneralNode(blockNode);
+  CodeGenStream("j\t%s", WhileStmtTag);
+  CodeGenStream("_End%s:", WhileStmtTag);
+}
+
 int genExprRelatedNode(AST_NODE* node){
   return 1;
 }
+
 void genReturnStmt(AST_NODE *node){
   DebugInfo(node, "gen return stmt");
 
@@ -103,9 +146,10 @@ void genReturnStmt(AST_NODE *node){
   while(cur){
     if(cur->type() == DECLARATION_NODE && cur->getDeclKind() == FUNCTION_DECL)
       break;
-    cur = cur->rightSibling;
+    cur = cur->parent;
   }
-  cur = cur->child->rightSibling;
+  assert(cur!=NULL);
+    cur = cur->child->rightSibling;
 
   int reg = genExprRelatedNode(node->child);
   //CodeGenStream("li\t$9, 1");
@@ -119,9 +163,6 @@ int genCondition(AST_NODE *node){
   return 1;
 }
 
-void getTagName(const char *prefix, AST_NODE *node, char *name){
-  sprintf(name, "%s_%d_%d", prefix, node->linenumber, node->type());
-}
 
 void genIfStmt(AST_NODE *node){
   DebugInfo(node->child, "gen If stmt");
@@ -137,7 +178,7 @@ void genIfStmt(AST_NODE *node){
   char branchName[1024];
   if(elseNode->type() != NUL_NODE){
     hasElse = true;
-    getTagName("_Branch", node->child, branchName);
+    getTagName("_IfBranch", node->child, branchName);
   }
 
   int reg = genCondition(conditionNode);
