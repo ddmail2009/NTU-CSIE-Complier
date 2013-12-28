@@ -165,6 +165,16 @@ typedef struct CON_Type{
   }
 } CON_Type;
 
+/* add the part needed in this homework */
+enum RegisterType {
+    GENERAL,
+    FLOATING
+};
+
+
+// forward declaration
+// this method is in gen-part.cpp
+int getReg(RegisterType type);
 
 class AST_NODE {
   public:
@@ -175,6 +185,9 @@ class AST_NODE {
     AST_TYPE nodeType;
     DATA_TYPE dataType;
     int linenumber;
+
+    // store temporaries value in register no. ?
+    int place;
     union {
       IdentifierSemanticValue identifierSemanticValue;
       STMTSemanticValue stmtSemanticValue;
@@ -260,6 +273,20 @@ class AST_NODE {
     SymbolTableEntry *getSymbol(){
       assert(type() == IDENTIFIER_NODE);
       return semantic_value.identifierSemanticValue.symbolTableEntry;
+    }
+
+    void setTemporaryPlace(DATA_TYPE type){
+        assert(type == INT_TYPE || type == FLOAT_TYPE);
+        if(type == INT_TYPE) {
+            place = getReg(GENERAL);
+        }
+        else if(type == FLOAT_TYPE) {
+            place = getReg(FLOATING);
+        }
+    }
+
+    int getTemporaryPlace() {
+        return place;
     }
 };
 

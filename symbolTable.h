@@ -74,7 +74,7 @@ class TypeDescriptor {
     } properties;
 };
 
-typedef struct Parameter {
+struct Parameter {
   struct Parameter* next;
   TypeDescriptor* type;
   char* parameterName;
@@ -89,7 +89,7 @@ typedef struct Parameter {
   const char *getParamName(){
     return parameterName;
   }
-} Parameter;
+};
 
 class FunctionSignature {
   public:
@@ -192,27 +192,33 @@ class SymbolTableEntry {
     char name[1024];
     SymbolAttribute* attribute;
     int nestingLevel;
+    // offset is for local variable allocation $fp + offset
+    int _offset;
 
     SymbolTableEntry(int level, const char *n = NULL, SymbolAttribute *attr = NULL):
-      nextInHashChain(NULL),
-      prevInHashChain(NULL),
-      nextInSameLevel(NULL),
-      sameNameInOuterLevel(NULL),
-      attribute(attr),
-      nestingLevel(level) {
+        nextInHashChain(NULL),
+        prevInHashChain(NULL),
+        nextInSameLevel(NULL),
+        sameNameInOuterLevel(NULL),
+        attribute(attr),
+        nestingLevel(level),
+        _offset(0) {
+            assert(n != NULL);
+            strcpy(name, n);
+    }
 
-        assert(n != NULL);
-        strcpy(name, n);
-      }
+    // when this variable is local (in the precedure), set the offset in the
+    // stack
+    void setOffset(int o) { _offset = o; }
+    int offset() { return _offset; }
 };
 
-typedef struct SymbolTable
-{
+struct SymbolTable {
   SymbolTableEntry* hashTable[HASH_TABLE_SIZE];
   SymbolTableEntry** scopeDisplay;
   int currentLevel;
   int scopeDisplayElementCount;
-} SymbolTable;
+};
 
 
 void initializeSymbolTable();

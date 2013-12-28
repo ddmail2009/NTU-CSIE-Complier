@@ -32,17 +32,17 @@ struct SysCallParameter {
   void setFloat(double d) { val.fval = d; }
 };
 
-struct GlobalVariable {
+struct Variable {
     // type can only be INT_TYPE, FLOAT_TYPE or CONST_STRING_TYPE
-    enum DATA_TYPE type;
     const char* idName; // string doesn't use the idName
+    DATA_TYPE _type;
     union {
         int ival;
         double fval;
         const char* str;
     } init;
-    GlobalVariable(DATA_TYPE t): type(t), idName(NULL) { }
-    DATA_TYPE type() { return type; }
+    Variable(DATA_TYPE t): _type(t), idName(NULL) { }
+    DATA_TYPE type() { return _type; }
     void setInt(int i) { init.ival = i; }
     void setFloat(double d) { init.fval = d; }
     void setString(const char* s) { init.str = s; }
@@ -56,6 +56,5 @@ struct GlobalVariable {
 int gen_head(const char *name);
 void gen_prologue(const char *functionName);
 void gen_epilogue(const char *functionName, int offset);
-void genGlobalVariableWithInit(const GlobalVariable* g);
-int getReg();
+void genGlobalVariableWithInit(const Variable* g);
 void genSysCall(const SysCallParameter* information);

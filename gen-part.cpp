@@ -3,6 +3,7 @@
 #include <cstdlib>
 
 #include "header.h"
+#include "symbolTable.h"
 #include "gen-part.h"
 
 const char* TEXT= ".text";
@@ -10,6 +11,7 @@ const char* DATA= ".data";
 const char* WORD= ".word";
 const char* SYSCALL = "syscall";
 int reg_number = 7;
+int floating_reg_number = 0;
 int string_literal_number = 0;
 
 extern void CodeGenStream(const char *format, ...);
@@ -25,7 +27,7 @@ void gen_prologue(const char *functionName) {
     CodeGenStream("sw\t$fp,-4($sp)");
     CodeGenStream("add\t$fp,$sp,-4");
     CodeGenStream("add\t$sp,$sp,-8");
-    CodeGenStream("lw\t$2, _framesize_%s", functionName);
+    CodeGenStream("lw\t$2,_framesize_%s", functionName);
     CodeGenStream("sub\t$sp,$sp,$2");
 
     /* naive save Caller Save Register */
@@ -62,20 +64,52 @@ void gen_epilogue(const char *functionName, int offset) {
     CodeGenStream("_framesize_%s: %s %d", functionName, WORD, offset);
 }
 
-void genGlobalVariableWithInit(const GlobalVariable* g) {
+void genGlobalVariableWithInit(Variable* var) {
     CodeGenStream("%s", DATA);
-    if(g->type() == INT_TYPE) {
-        CodeGenStream("_%s:\t%s %d", g->getId(), WORD, g->getInt()); */
+    if(var->type() == INT_TYPE) {
+        CodeGenStream("_%s:\t%s %d", var->getId(), WORD, var->getInt());
     }
-    else if(g->type() == FLOAT_TYPE) {
-        CodeGenStream("_%s:\t%s %lf", g->getId(), WORD, g->getFloat());
+    else if(var->type() == FLOAT_TYPE) {
+        CodeGenStream("_%s:\t%s %lf", var->getId(), WORD, var->getFloat());
     }
-    else if(g->type() == CONST_STRING_TYPE) {
-        CodeGenStream("string%d: .asciiz \"%s\"", string_literal_number, g->getString());
+    else if(var->type() == CONST_STRING_TYPE) {
+        CodeGenStream("string%d: .asciiz \"%s\"", string_literal_number, var->getString());
         string_literal_number++;
     }
     else {
         fprintf(stderr, "unknowed type of global variable\n");
+        exit(1);
+    }
+}
+
+/* store it to AR, and load it to the register */
+void genStackVariableWithInit(SymbolTableEntry* entry, Variable* var) {
+    CodeGenStream("%s", TEXT);
+    if(entry->attribute->getTypeDes()->getKind() == SCALAR_TYPE_DESCRIPTOR) {
+        if(var->type() == INT_TYPE) {
+            CodeGenStream("sw\t%d,%d($fp)", var->getInt(), entry->offset());
+            CodeGenStream("lw\t$%d,%d($fp)",entry);
+        }
+        else if(var->type() == FLOAT_TYPE) {
+            CodeGenStream("sw\t%lf,%d($fp)", var->getFloat(), entry->offset());
+        }
+        else { /* string literal -> put it in .data */
+            CodeGenStream("string%d: .asciiz \"%s\"", string_literal_number, var->getString());
+            string_literal_number++;
+        }
+    }
+    else { // ARRAY_TYPE_DESCRIPTOR
+        /* TODO */
+    }
+}
+
+void genStoreToTempValueToRegister(const AST_NODE* node, DATA_TYPE type) {
+    if(type == INT_TYPE) {
+    }
+    else if(type == FLOAT_TYPE) {
+    }
+    else {
+        fprintf(stderr, "this case shouldn't be happened in C--\n");
         exit(1);
     }
 }
@@ -89,12 +123,22 @@ inline bool isCalleeSaveRegister(int reg) {
 }
 
 /* naive method */
-int getReg() {
-    if(reg_number <= 25) {
-        return ++reg_number;
+int getReg(RegisterType type) {
+    if(type == GENERAL) {
+        if(reg_number <= 25) {
+            return ++reg_number;
+        }
+        reg_number = 8;
+        return reg_number;
     }
-    reg_number = 8;
-    return reg_number;
+    else {
+        if(floating_reg_number < 32){
+            return ++floating_reg_number;
+        }
+        floating_reg_number = 0;
+        return floating_reg_number;
+    }
+    return -1;
 }
 
 /* In C--, we use double instead of float to implement FLOATC.
