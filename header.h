@@ -196,8 +196,6 @@ class AST_NODE {
       CON_Type *const1;
     } semantic_value;
 
-    void visit();
-
     void setSymbolTableEntry(SymbolTableEntry *entry){
       assert(type() == IDENTIFIER_NODE);
       semantic_value.identifierSemanticValue.symbolTableEntry = entry;
@@ -206,11 +204,6 @@ class AST_NODE {
     AST_TYPE type() {
       return nodeType;
     }
-
-    float processExprOp(int, int);
-    float processExprOp(int, float);
-    float processExprOp(float, int);
-    float processExprOp(float, float);
 
     DATA_TYPE getDataType() {
       return dataType;
@@ -263,6 +256,11 @@ class AST_NODE {
     BINARY_OPERATOR getBinaryOp() {
       assert(type() == EXPR_NODE);
       return semantic_value.exprSemanticValue.binaryOp();
+    }
+
+    UNARY_OPERATOR getUnaryOp() {
+      assert(type() == EXPR_NODE);
+      return semantic_value.exprSemanticValue.unaryOp();
     }
 
     const char* getIDName() {

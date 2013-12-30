@@ -210,7 +210,7 @@ class SymbolTableEntry {
     // when this variable is local (in the precedure), set the offset in the
     // stack
     void setOffset(int o) { _offset = o; }
-    int offset() { return _offset; }
+    int offset() const { return _offset; }
 };
 
 struct SymbolTable {

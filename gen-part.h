@@ -1,3 +1,6 @@
+#ifndef _Gen_Part_H
+#define _Gen_Part_H
+
 enum SystemCallCode {
   PRINT_INT = 1, // $a0 = integer
   PRINT_FLOAT,   // $f12 = float
@@ -34,27 +37,34 @@ struct SysCallParameter {
 
 struct Variable {
     // type can only be INT_TYPE, FLOAT_TYPE or CONST_STRING_TYPE
-    const char* idName; // string doesn't use the idName
     DATA_TYPE _type;
+    const char* idName; // string doesn't use the idName
     union {
         int ival;
         double fval;
         const char* str;
     } init;
     Variable(DATA_TYPE t): _type(t), idName(NULL) { }
-    DATA_TYPE type() { return _type; }
+    Variable(DATA_TYPE t, const char* str): _type(t), idName(str) { }
+    DATA_TYPE type() const { return _type; }
     void setInt(int i) { init.ival = i; }
     void setFloat(double d) { init.fval = d; }
     void setString(const char* s) { init.str = s; }
     void setIdName(const char* id) { idName = id; }
-    int getInt() { return init.ival; }
-    double getFloat() { return init.fval; }
-    const char* getString() { return init.str; }
-    const char* getId() { return idName; }
+    int getInt() const { return init.ival; }
+    double getFloat() const { return init.fval; }
+    const char* getString() const { return init.str; }
+    const char* getId() const { return idName; }
 };
 
 int gen_head(const char *name);
 void gen_prologue(const char *functionName);
 void gen_epilogue(const char *functionName, int offset);
 void genGlobalVariableWithInit(const Variable* g);
+void genStackVariableWithInit(const SymbolTableEntry* entry, const Variable& var);
 void genSysCall(const SysCallParameter* information);
+
+void genConStmt(AST_NODE *node);
+void genOpStmt(AST_NODE *node);
+
+#endif

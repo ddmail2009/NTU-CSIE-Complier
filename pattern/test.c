@@ -1,8 +1,13 @@
-int i;
+int result;
+int fact(int n){
+    if(n == 1){
+        return n;
+    } else {
+        return (n*fact(n-1));
+    }
+}
 
 int main(){
-  int i;
-  for(i=2; i<3; i=i+1){
-    write(1);
-  }
+    int n;
+    fact(2);
 }
