@@ -24,6 +24,7 @@ int gen_head(const char *name) {
 }
 
 void gen_prologue(const char *functionName) {
+    CodeGenStream("# prologue sequence");
     CodeGenStream("sw\t$ra,0($sp)");
     CodeGenStream("sw\t$fp,-4($sp)");
     CodeGenStream("add\t$fp,$sp,-4");
@@ -42,6 +43,7 @@ void gen_prologue(const char *functionName) {
 
 // offset is at least 32 bytes (at least 8 caller save registers)
 void gen_epilogue(const char *functionName, int offset) {
+    CodeGenStream("# epilogue sequence");
     CodeGenStream("_end_%s:", functionName);
     /* naive restore Caller Save Register */
     for(int i = 0; i < 8; i++)
@@ -51,35 +53,68 @@ void gen_epilogue(const char *functionName, int offset) {
     CodeGenStream("add\t$sp, $fp, 4"); // pop AR
     CodeGenStream("lw\t$fp, 0($fp)"); // restore caller (old) $fp
     if (strcmp(functionName, "main") == 0) {
-        SysCallParameter p(EXIT);
-        genSysCall(&p);
+        genSysCall(SysCallParameter(EXIT));
     }
     else {
         CodeGenStream("jr\t$ra");
-        CodeGenStream("%s", DATA);
     }
 
     /* determine the _framsize_functionName, and this value is at least 32
      * bytes
      */
+    CodeGenStream("%s", DATA);
     CodeGenStream("_framesize_%s: %s %d", functionName, WORD, offset);
 }
 
-void genGlobalVariableWithInit(const Variable* var) {
-    CodeGenStream("%s", DATA);
-    if(var->type() == INT_TYPE) {
-        CodeGenStream("_%s:\t%s %d", var->getId(), WORD, var->getInt());
+void genVariable(AST_NODE *IDNode){
+    SymbolTableEntry *entry = IDNode->getSymbol();
+    TypeDescriptor *type = entry->attribute->getTypeDes();
+
+    // global variable
+    if(entry->nestingLevel == 0) {
+        CodeGenStream("%s", DATA);
+        // SCALAR TYPE
+        if(IDNode->getIDKind() == NORMAL_ID){
+            if(type->getDataType() == INT_TYPE)
+                CodeGenStream("_%s:\t.word %d", entry->name, 0);
+            else if(type->getDataType() == FLOAT_TYPE)
+                CodeGenStream("_%s:\t.float %lf", entry->name, 0.0);
+        }
+        // ARRAY TYPE
+        else if(IDNode->getIDKind() == ARRAY_ID){
+            int size = 0;
+            for(int i=0; i<type->getDimension(); i++)
+                size += type->getArrayDimensionSize(i);
+            CodeGenStream("_%s:\t.space %d", entry->name, size);
+        }
+        //ARRAY TYPE
+        else if(IDNode->getIDKind() == WITH_INIT_ID){
+            if(type->getDataType() == INT_TYPE) 
+                CodeGenStream("_%s:\t.word %d", entry->name, IDNode->getConIntValue());
+            else if(type->getDataType() == FLOAT_TYPE)
+                CodeGenStream("_%s:\t.float %lf", entry->name, IDNode->getConFloatValue());
+        }
     }
-    else if(var->type() == FLOAT_TYPE) {
-        CodeGenStream("_%s:\t%s %lf", var->getId(), WORD, var->getFloat());
-    }
-    else if(var->type() == CONST_STRING_TYPE) {
-        CodeGenStream("string%d: .asciiz \"%s\"", string_literal_number, var->getString());
-        string_literal_number++;
-    }
+    // local variable
     else {
-        fprintf(stderr, "unknowed type of global variable\n");
-        exit(1);
+        // calculate offset already in the same scope
+        int offset = 0;
+        SymbolTableEntry *cur = entry;
+        while(cur){
+            if(offset < cur->offset()) offset = cur->offset();
+            cur = cur->nextInSameLevel;
+        }
+
+        offset += type->size(); 
+        entry->setOffset(offset);
+
+        if(IDNode->getIDKind() == WITH_INIT_ID){
+            if(type->getDataType() == INT_TYPE)
+                CodeGenStream("sw\t%d, %d($fp)", IDNode->getConIntValue(), entry->offset());
+            else if(type->getDataType() == FLOAT_TYPE)
+                CodeGenStream("sw\t%lf, %d($fp)", IDNode->getConFloatValue(), entry->offset());
+        }
+        DebugInfo(IDNode, "set ID: %s to offset: %d", entry->name, offset);
     }
 }
 
@@ -95,7 +130,7 @@ void genStackVariableWithInit(const SymbolTableEntry* entry, const Variable& var
             CodeGenStream("sw\t%lf,%d($fp)", var.getFloat(), entry->offset());
         }
         else { /* string literal -> put it in .data */
-            CodeGenStream("string%d: .asciiz \"%s\"", string_literal_number, var.getString());
+            CodeGenStream("string%d: .asciiz\"%s\"", string_literal_number, var.getString());
             string_literal_number++;
         }
     }
@@ -149,12 +184,12 @@ int getReg(RegisterType type) {
  * NOTE: if write_string, PLEASE CALL genGlobalVariableWithInit FIRST
  *
  */
-void genSysCall(const SysCallParameter* information) {
-    switch(information->type) {
+void genSysCall(const SysCallParameter& information) {
+    switch(information.type) {
         case PRINT_INT:
             CodeGenStream("#print_int system call");
-            CodeGenStream("li\t$v0, %d", information->type);
-            CodeGenStream("la\t$a0, %d", information->val.ival);
+            CodeGenStream("li\t$v0, %d", information.type);
+            CodeGenStream("la\t$a0, %d", information.val.ival);
             break;
         case PRINT_FLOAT:
             fprintf(stderr, "this case shouldn't be happened in C--\n");
@@ -162,18 +197,19 @@ void genSysCall(const SysCallParameter* information) {
             break;
         case PRINT_DOUBLE:
             CodeGenStream("#print_double system call");
-            CodeGenStream("li\t$v0, %d", information->type);
-            CodeGenStream("la\t$f12, %lf", information->val.fval);
+            CodeGenStream("li\t$v0, %d", information.type);
+            CodeGenStream("la\t$f12, %lf", information.val.fval);
             break;
         case PRINT_STRING:
+            CodeGenStream("string%d: .asciiz \"%s\"", string_literal_number++, information.val.str);
             CodeGenStream("#print_string system call");
-            CodeGenStream("li\t$v0, %d", information->type);
+            CodeGenStream("li\t$v0, %d", information.type);
             /* assume the const string is generated just before the genSysCall */
             CodeGenStream("la\t$a0, string%d", string_literal_number - 1);
             break;
         case READ_INT:
             CodeGenStream("#read_int system call");
-            CodeGenStream("li\t$v0, %d", information->type);
+            CodeGenStream("li\t$v0, %d", information.type);
             break;
         case READ_FLOAT:
             fprintf(stderr, "this case shouldn't be happened in C--\n");
@@ -181,20 +217,20 @@ void genSysCall(const SysCallParameter* information) {
             break;
         case READ_DOUBLE:
             CodeGenStream("#read_double system call");
-            CodeGenStream("li\t$v0, %d", information->type);
+            CodeGenStream("li\t$v0, %d", information.type);
             break;
         case READ_STRING: 
             CodeGenStream("#read_string system call");
-            CodeGenStream("li\t$v0, %d", information->type);
+            CodeGenStream("li\t$v0, %d", information.type);
             CodeGenStream("la\t$a0, string%d", string_literal_number - 1); // address of string to print
             break;
         case SBRK:
             CodeGenStream("#sbrk system call");
-            CodeGenStream("li\t$v0, %d", information->type);
+            CodeGenStream("li\t$v0, %d", information.type);
             break;
         case EXIT:
             CodeGenStream("#exit system call");
-            CodeGenStream("li\t$v0, %d", information->type);
+            CodeGenStream("li\t$v0, %d", information.type);
             break;
         default:
             fprintf(stderr, "unknowed type of SysCall\n");
@@ -252,9 +288,23 @@ void genOpStmt(AST_NODE *node){
                 default:
                     break;
             }
+            break;
         }
         case UNARY_OPERATION:
         {
+            switch(node->getUnaryOp()){
+                case UNARY_OP_POSITIVE:
+                    CodeGenStream("abs\t$%d, $%d", node->getTemporaryPlace(), node->getTemporaryPlace());
+                    break;
+                case UNARY_OP_NEGATIVE:
+                    CodeGenStream("neg\t$%d, $%d", node->getTemporaryPlace(), node->getTemporaryPlace());
+                    break;
+                case UNARY_OP_LOGICAL_NEGATION:
+                    CodeGenStream("not\t$%d, $%d",node->getTemporaryPlace(), node->getTemporaryPlace());
+                    break;
+                default:
+                    break;
+            }
         }
         default:
             break;
@@ -268,7 +318,7 @@ void genConStmt(AST_NODE *node){
             CodeGenStream("li\t$%d, %d", node->getTemporaryPlace(), node->getConIntValue());
             break;
         case FLOATC:
-            CodeGenStream("li\t$%d, %lf", node->getTemporaryPlace(), node->getConFloatValue());
+            CodeGenStream("li.s\t$f%d, %lf", node->getTemporaryPlace(), node->getConFloatValue());
             break;
         case STRINGC:
             DebugInfo(node, "Unhandle case in genExprRelatedNode:constValue, conType: %d", node->getConType());

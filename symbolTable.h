@@ -72,6 +72,16 @@ class TypeDescriptor {
       DATA_TYPE dataType;//kind: SCALAR_TYPE_DESCRIPTOR
       ArrayProperties arrayProperties;//kind: ARRAY_TYPE_DESCRIPTOR
     } properties;
+
+    int size() const {
+        if(getKind() == SCALAR_TYPE_DESCRIPTOR) return 4;
+        else{
+            int size = 0;
+            for(int i=0; i<getDimension(); i++)
+                size += getArrayDimensionSize(i);
+            return (size*4+3)/4*4;
+        }
+    }
 };
 
 struct Parameter {
@@ -128,8 +138,8 @@ class FunctionSignature {
       }
       puts("");
     }
-    
-    
+
+
     int parametersCount;
     Parameter *parameterList;
     DATA_TYPE returnType;
@@ -211,6 +221,18 @@ class SymbolTableEntry {
     // stack
     void setOffset(int o) { _offset = o; }
     int offset() const { return _offset; }
+    void getLocation(char *outStr){
+        if(nestingLevel == 0) 
+            sprintf(outStr, "_%s", name);
+        else 
+            sprintf(outStr, "%d($fp)", offset());
+    }
+    void getLocation(char *outStr, int off){
+        if(nestingLevel == 0)
+            getLocation(outStr);
+        else 
+            sprintf(outStr, "%d($fp)", offset() - off*4);
+    }
 };
 
 struct SymbolTable {

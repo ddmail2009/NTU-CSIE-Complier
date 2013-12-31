@@ -29,8 +29,12 @@ struct SysCallParameter {
   union {
     int ival;
     double fval;
+    const char* str;
   } val;
   SysCallParameter(SystemCallCode t):type(t) { }
+  SysCallParameter(SystemCallCode t, int i): type(t) { val.ival = i; }
+  SysCallParameter(SystemCallCode t, double f): type(t) { val.fval = f; }
+  SysCallParameter(SystemCallCode t, const char *str): type(t) { val.str = str; }
   void setInt(int i) { val.ival = i; }
   void setFloat(double d) { val.fval = d; }
 };
@@ -62,9 +66,9 @@ void gen_prologue(const char *functionName);
 void gen_epilogue(const char *functionName, int offset);
 void genGlobalVariableWithInit(const Variable* g);
 void genStackVariableWithInit(const SymbolTableEntry* entry, const Variable& var);
-void genSysCall(const SysCallParameter* information);
+void genSysCall(const SysCallParameter& information);
 
 void genConStmt(AST_NODE *node);
 void genOpStmt(AST_NODE *node);
-
+void genVariable(AST_NODE *node);
 #endif

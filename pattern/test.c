@@ -1,13 +1,18 @@
 int result;
 int fact(int n){
-    if(n == 1){
+    if(n == 1)
+    {
         return n;
-    } else {
+    } 
+    else 
+    {
         return (n*fact(n-1));
     }
 }
 
 int main(){
     int n;
+    if(n > 1) result = fact(n);
+    else result = 1;
     fact(2);
 }

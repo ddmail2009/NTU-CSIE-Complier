@@ -983,9 +983,9 @@ void processVariableLValue(AST_NODE* idNode)
         idNode->dataType = ERROR_TYPE;
         return;
     }
-    
+
     TypeDescriptor *typeDescriptor = idNode->semantic_value.identifierSemanticValue.symbolTableEntry->attribute->attr.typeDescriptor;
-        
+
     if(idNode->semantic_value.identifierSemanticValue.kind == NORMAL_ID)
     {
         if(typeDescriptor->kind == ARRAY_TYPE_DESCRIPTOR)
@@ -1041,7 +1041,7 @@ void processVariableLValue(AST_NODE* idNode)
 void processVariableRValue(AST_NODE* idNode)
 {
     SymbolTableEntry *symbolTableEntry = retrieveSymbol(idNode->semantic_value.identifierSemanticValue.identifierName);
-    
+
     idNode->semantic_value.identifierSemanticValue.symbolTableEntry = symbolTableEntry;
     if(!symbolTableEntry)
     {
@@ -1049,7 +1049,7 @@ void processVariableRValue(AST_NODE* idNode)
         idNode->dataType = ERROR_TYPE;
         return;
     }
-    
+
     if(symbolTableEntry->attribute->attributeKind == TYPE_ATTRIBUTE)
     {
         printErrorMsg(idNode, IS_TYPE_NOT_VARIABLE);
@@ -1058,7 +1058,7 @@ void processVariableRValue(AST_NODE* idNode)
     }
 
     TypeDescriptor *typeDescriptor = idNode->semantic_value.identifierSemanticValue.symbolTableEntry->attribute->attr.typeDescriptor;
-        
+
     if(idNode->semantic_value.identifierSemanticValue.kind == NORMAL_ID)
     {
         if(typeDescriptor->kind == ARRAY_TYPE_DESCRIPTOR)
