@@ -25,16 +25,16 @@ int gen_head(const char *name) {
 
 void gen_prologue(const char *functionName) {
     CodeGenStream("# prologue sequence");
-    CodeGenStream("sw\t$ra,0($sp)");
-    CodeGenStream("sw\t$fp,-4($sp)");
-    CodeGenStream("add\t$fp,$sp,-4");
-    CodeGenStream("add\t$sp,$sp,-8");
-    CodeGenStream("lw\t$2,_framesize_%s", functionName);
-    CodeGenStream("sub\t$sp,$sp,$2");
+    CodeGenStream("sw\t$ra, 0($sp)");
+    CodeGenStream("sw\t$fp, -4($sp)");
+    CodeGenStream("add\t$fp, $sp, -4");
+    CodeGenStream("add\t$sp, $sp, -8");
+    CodeGenStream("lw\t$2, _framesize_%s", functionName);
+    CodeGenStream("sub\t$sp, $sp, $2");
 
     /* naive save Caller Save Register */
     for(int i = 0; i < 8; i++)
-        CodeGenStream("sw\t$%d,%d($sp)", 8 + i, 32 - 4 * i);
+        CodeGenStream("sw\t$%d, %d($sp)", 8 + i, 32 - 4 * i);
 
     /* pushNewAR(); */ 
 
@@ -42,7 +42,7 @@ void gen_prologue(const char *functionName) {
 }
 
 // offset is at least 32 bytes (at least 8 caller save registers)
-void gen_epilogue(const char *functionName, int offset) {
+void gen_epilogue(const char *functionName) {
     CodeGenStream("# epilogue sequence");
     CodeGenStream("_end_%s:", functionName);
     /* naive restore Caller Save Register */
@@ -58,97 +58,8 @@ void gen_epilogue(const char *functionName, int offset) {
     else {
         CodeGenStream("jr\t$ra");
     }
-
-    /* determine the _framsize_functionName, and this value is at least 32
-     * bytes
-     */
-    // CodeGenStream("%s", DATA);
-    // CodeGenStream("_framesize_%s: %s %d", functionName, WORD, offset);
 }
 
-void genVariable(AST_NODE *IDNode){
-    SymbolTableEntry *entry = IDNode->getSymbol();
-    TypeDescriptor *type = entry->attribute->getTypeDes();
-
-    // global variable
-    if(entry->nestingLevel == 0) {
-        CodeGenStream("%s", DATA);
-        // SCALAR TYPE
-        if(IDNode->getIDKind() == NORMAL_ID){
-            if(type->getDataType() == INT_TYPE)
-                CodeGenStream("_%s:\t.word %d", entry->name, 0);
-            else if(type->getDataType() == FLOAT_TYPE)
-                CodeGenStream("_%s:\t.float %lf", entry->name, 0.0);
-        }
-        // ARRAY TYPE
-        else if(IDNode->getIDKind() == ARRAY_ID){
-            int size = 0;
-            for(int i=0; i<type->getDimension(); i++)
-                size += type->getArrayDimensionSize(i);
-            CodeGenStream("_%s:\t.space %d", entry->name, size);
-        }
-        //ARRAY TYPE
-        else if(IDNode->getIDKind() == WITH_INIT_ID){
-            if(type->getDataType() == INT_TYPE) 
-                CodeGenStream("_%s:\t.word %d", entry->name, IDNode->getConIntValue());
-            else if(type->getDataType() == FLOAT_TYPE)
-                CodeGenStream("_%s:\t.float %lf", entry->name, IDNode->getConFloatValue());
-        }
-    }
-    // local variable
-    else {
-        // calculate offset already in the same scope
-        int offset = 0;
-        SymbolTableEntry *cur = entry;
-        while(cur){
-            if(offset < cur->offset()) offset = cur->offset();
-            cur = cur->nextInSameLevel;
-        }
-
-        offset += type->size(); 
-        entry->setOffset(offset);
-
-        if(IDNode->getIDKind() == WITH_INIT_ID){
-            if(type->getDataType() == INT_TYPE)
-                CodeGenStream("sw\t%d, %d($fp)", IDNode->getConIntValue(), entry->offset());
-            else if(type->getDataType() == FLOAT_TYPE)
-                CodeGenStream("sw\t%lf, %d($fp)", IDNode->getConFloatValue(), entry->offset());
-        }
-        DebugInfo(IDNode, "set ID: %s to offset: %d", entry->name, offset);
-    }
-}
-
-/* store it to AR, and load it to the register */
-void genStackVariableWithInit(const SymbolTableEntry* entry, const Variable& var) {
-    CodeGenStream("%s", TEXT);
-    if(entry->attribute->getTypeDes()->getKind() == SCALAR_TYPE_DESCRIPTOR) {
-        if(var.type() == INT_TYPE) {
-            CodeGenStream("sw\t%d,%d($fp)", var.getInt(), entry->offset());
-            CodeGenStream("lw\t$%d,%d($fp)",entry);
-        }
-        else if(var.type() == FLOAT_TYPE) {
-            CodeGenStream("sw\t%lf,%d($fp)", var.getFloat(), entry->offset());
-        }
-        else { /* string literal -> put it in .data */
-            CodeGenStream("string%d: .asciiz\"%s\"", string_literal_number, var.getString());
-            string_literal_number++;
-        }
-    }
-    else { // ARRAY_TYPE_DESCRIPTOR
-        /* TODO */
-    }
-}
-
-void genStoreToTempValueToRegister(const AST_NODE* node, DATA_TYPE type) {
-    if(type == INT_TYPE) {
-    }
-    else if(type == FLOAT_TYPE) {
-    }
-    else {
-        fprintf(stderr, "this case shouldn't be happened in C--\n");
-        exit(1);
-    }
-}
 
 inline bool isCallerSaveRegister(int reg) {
     return (reg > 7 && reg < 16) || reg == 24 || reg == 25;

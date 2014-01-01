@@ -18,12 +18,13 @@ void genStmtNode(AST_NODE *node);
 void genAssignOrExpr(AST_NODE *node);
 void genFunctionCall(AST_NODE *node);
 void genAssignStmt(AST_NODE *node);
-void gen_epiDataField(int offset);
+void gen_epiDataField();
 
 // Starter Function
 void codeGen(AST_NODE* prog);
 
 // Utility Function
+void genMoveCommand(DATA_TYPE srctype, DATA_TYPE desttype, const char* src, const char* dest);
 void genGeneralNodeWithSibling(AST_NODE *node);
 void genGeneralNode(AST_NODE *node);
 void CodeGenStream(const char *format, ...);

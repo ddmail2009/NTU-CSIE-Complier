@@ -2,6 +2,7 @@
 #define __HEADER_H__
 
 #include <assert.h>
+#include <stdio.h>
 #define MAX_ARRAY_DIMENSION 10
 
 typedef enum DATA_TYPE{

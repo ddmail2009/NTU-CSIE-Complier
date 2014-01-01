@@ -9,6 +9,9 @@ int main() {
     j = 2;
     k = 3;
 
+    l = 1.0;
+    m = 2.0;
+    n = 3.0;
 
     o = (i+j)*k;
     write(o);

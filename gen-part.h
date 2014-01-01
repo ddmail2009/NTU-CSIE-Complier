@@ -63,12 +63,11 @@ struct Variable {
 
 int gen_head(const char *name);
 void gen_prologue(const char *functionName);
-void gen_epilogue(const char *functionName, int offset);
+void gen_epilogue(const char *functionName);
 void genGlobalVariableWithInit(const Variable* g);
 void genStackVariableWithInit(const SymbolTableEntry* entry, const Variable& var);
 void genSysCall(const SysCallParameter& information);
 
 void genConStmt(AST_NODE *node);
 void genOpStmt(AST_NODE *node);
-void genVariable(AST_NODE *node);
 #endif
