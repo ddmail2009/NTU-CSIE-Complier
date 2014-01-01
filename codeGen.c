@@ -46,7 +46,7 @@ void getTagName(const char *prefix, AST_NODE *node, char *name){
 }
 
 void codeGen(AST_NODE* prog){
-    f = fopen("a.out", "w");
+    f = fopen("output.s", "w");
     DebugInfo(prog, "start codeGen");
     genGeneralNode(prog);
     DebugInfo(prog, "end codeGen");
