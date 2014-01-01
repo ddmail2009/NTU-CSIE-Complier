@@ -62,8 +62,8 @@ void gen_epilogue(const char *functionName, int offset) {
     /* determine the _framsize_functionName, and this value is at least 32
      * bytes
      */
-    CodeGenStream("%s", DATA);
-    CodeGenStream("_framesize_%s: %s %d", functionName, WORD, offset);
+    // CodeGenStream("%s", DATA);
+    // CodeGenStream("_framesize_%s: %s %d", functionName, WORD, offset);
 }
 
 void genVariable(AST_NODE *IDNode){
@@ -162,14 +162,13 @@ inline bool isCalleeSaveRegister(int reg) {
 int getReg(RegisterType type) {
     if(type == GENERAL) {
         // Isn't this  15 instead of 25?
-        if(reg_number <= 14) {
+        if(reg_number <= 25) {
             return ++reg_number;
         }
         reg_number = 8;
         return reg_number;
     }
     else {
-
         if(floating_reg_number < 32){
             return ++floating_reg_number;
         }
@@ -241,53 +240,66 @@ void genSysCall(const SysCallParameter& information) {
 }
 
 void genOpStmt(AST_NODE *node){
+    const char Binarycommand[][2][10] = {
+        {"add", "add.s"},
+        {"sub", "sub.s"},
+        {"mul", "mul.s"},
+        {"div", "div.s"},
+        {"seq", "c.eq.s"},
+        {"sge", "c.le.s"},
+        {"sle", "c.le.s"},
+        {"sne", "c.eq.s"},
+        {"sgt", "c.lt.s"},
+        {"slt", "c.lt.s"},
+        {"and", "and"},
+        {"or" , "or"}
+    };
+    bool negate[] = {
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false
+    };
+
     switch(node->getExprKind()){
         case BINARY_OPERATION:
         {
             AST_NODE *left = node->child;
             AST_NODE *right = node->child->rightSibling;
 
-            node->setTemporaryPlace(node->getDataType());
-            switch(node->getBinaryOp()){
-                case BINARY_OP_ADD:
-                    CodeGenStream("add\t%d, $%d, %d", node->getTemporaryPlace(), left->getTemporaryPlace(), right->getTemporaryPlace());
-                    break;
-                case BINARY_OP_SUB:
-                    CodeGenStream("sub\t$%d, $%d, $%d", node->getTemporaryPlace(), left->getTemporaryPlace(), right->getTemporaryPlace());
-                    break;
-                case BINARY_OP_MUL:
-                    CodeGenStream("mul\t$%d, $%d, $%d", node->getTemporaryPlace(), left->getTemporaryPlace(), right->getTemporaryPlace());
-                    break;
-                case BINARY_OP_DIV:
-                    CodeGenStream("div\t$%d, $%d, $%d", node->getTemporaryPlace(), left->getTemporaryPlace(), right->getTemporaryPlace());
-                    break;
-                case BINARY_OP_EQ:
-                    CodeGenStream("seq\t$%d, $%d, $%d", node->getTemporaryPlace(), left->getTemporaryPlace(), right->getTemporaryPlace());
-                    break;
-                case BINARY_OP_GE:
-                    CodeGenStream("sge\t$%d, $%d, $%d", node->getTemporaryPlace(), left->getTemporaryPlace(), right->getTemporaryPlace());
-                    break;
-                case BINARY_OP_LE:
-                    CodeGenStream("sle\t$%d, $%d, $%d", node->getTemporaryPlace(), left->getTemporaryPlace(), right->getTemporaryPlace());
-                    break;
-                case BINARY_OP_NE:
-                    CodeGenStream("sne\t$%d, $%d, $%d", node->getTemporaryPlace(), left->getTemporaryPlace(), right->getTemporaryPlace());
-                    break;
-                case BINARY_OP_GT:
-                    CodeGenStream("sgt\t$%d, $%d, $%d", node->getTemporaryPlace(), left->getTemporaryPlace(), right->getTemporaryPlace());
-                    break;
-                case BINARY_OP_LT:
-                    CodeGenStream("slt\t$%d, $%d, $%d", node->getTemporaryPlace(), left->getTemporaryPlace(), right->getTemporaryPlace());
-                    break;
-                case BINARY_OP_AND:
-                    CodeGenStream("and\t$%d, $%d, $%d", node->getTemporaryPlace(), left->getTemporaryPlace(), right->getTemporaryPlace());
-                    break;
-                case BINARY_OP_OR:
-                    CodeGenStream("or\t$%d, $%d, $%d", node->getTemporaryPlace(), left->getTemporaryPlace(), right->getTemporaryPlace());
-                    break;
-                default:
-                    break;
+            node->setTemporaryPlace();
+
+            char leftPlace[1024], rightPlace[1024];
+            strcpy(leftPlace, left->getTemporaryPlace());
+            strcpy(rightPlace, right->getTemporaryPlace());
+            if(left->getDataType() == FLOAT_TYPE && right->getDataType() == INT_TYPE){
+                sprintf(rightPlace, "f%d", getReg(FLOATING));
+                CodeGenStream("cvt.s.w\t%s, %s", right->getTemporaryPlace(), rightPlace);
             }
+            if(left->getDataType() == INT_TYPE && right->getDataType() == FLOAT_TYPE){
+                sprintf(leftPlace, "f%d", getReg(FLOATING));
+                CodeGenStream("cvt.s.w\t%s, %s", left->getTemporaryPlace(), rightPlace);
+            }
+            if(node->getDataType() == INT_TYPE && (left->getDataType() == FLOAT_TYPE || right->getDataType() == FLOAT_TYPE)){
+                if(node->getBinaryOp() <= BINARY_OP_DIV)
+                    CodeGenStream("%s\t$%s, $%s, $%s", Binarycommand[node->getBinaryOp()][FLOAT_TYPE], node->getTemporaryPlace(), leftPlace, rightPlace);
+                else{
+                    CodeGenStream("%s\t$%s, $%s", Binarycommand[node->getBinaryOp()][FLOAT_TYPE], leftPlace, rightPlace);
+                    CodeGenStream("bc1f _False%d", node->linenumber);
+                    CodeGenStream("li\t$%s, %d", node->getTemporaryPlace(), !negate[node->getBinaryOp()]);
+                    CodeGenStream("_False%d:", node->linenumber);
+                    CodeGenStream("li\t$%s, %d", node->getTemporaryPlace(), negate[node->getBinaryOp()]);
+                }
+            } else 
+                CodeGenStream("%s\t$%s, $%s, $%s", Binarycommand[node->getBinaryOp()][node->getDataType()], node->getTemporaryPlace(), left->getTemporaryPlace(), right->getTemporaryPlace());
             break;
         }
         case UNARY_OPERATION:
@@ -312,13 +324,13 @@ void genOpStmt(AST_NODE *node){
 }
 
 void genConStmt(AST_NODE *node){
-    node->setTemporaryPlace(node->getDataType());
+    node->setTemporaryPlace();
     switch(node->getConType()){
         case INTEGERC:
-            CodeGenStream("li\t$%d, %d", node->getTemporaryPlace(), node->getConIntValue());
+            CodeGenStream("li\t$%s, %d", node->getTemporaryPlace(), node->getConIntValue());
             break;
         case FLOATC:
-            CodeGenStream("li.s\t$f%d, %lf", node->getTemporaryPlace(), node->getConFloatValue());
+            CodeGenStream("li.s\t$%s, %lf", node->getTemporaryPlace(), node->getConFloatValue());
             break;
         case STRINGC:
             DebugInfo(node, "Unhandle case in genExprRelatedNode:constValue, conType: %d", node->getConType());

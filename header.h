@@ -233,7 +233,7 @@ class AST_NODE {
       return semantic_value.const1->const_u.fval;
     }
 
-    char* getCharPtrValue() {
+    const char* getCharPtrValue() {
       assert(getConType() == STRINGC);
       return semantic_value.const1->const_u.sc;
     }
@@ -273,18 +273,26 @@ class AST_NODE {
       return semantic_value.identifierSemanticValue.symbolTableEntry;
     }
 
-    void setTemporaryPlace(DATA_TYPE type){
-        assert(type == INT_TYPE || type == FLOAT_TYPE);
-        if(type == INT_TYPE) {
+    void setTemporaryPlace(){
+        if(getDataType() == INT_TYPE) {
             place = getReg(GENERAL);
         }
-        else if(type == FLOAT_TYPE) {
+        else if(getDataType() == FLOAT_TYPE) {
             place = getReg(FLOATING);
         }
     }
 
-    int getTemporaryPlace() {
-        return place;
+    void getTemporaryPlace(char *outStr){
+        if(getDataType() == FLOAT_TYPE)
+            sprintf(outStr, "f%d", place);
+        else 
+            sprintf(outStr, "%d", place);
+    }
+
+    char placeStr[1024];
+    const char *getTemporaryPlace(){
+        getTemporaryPlace(placeStr);
+        return placeStr;
     }
 };
 

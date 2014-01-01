@@ -1,5 +1,43 @@
 .data
-_g:	.word 0
+_num:	.word 0
+.text
+fna:
+# prologue sequence
+sw	$ra,0($sp)
+sw	$fp,-4($sp)
+add	$fp,$sp,-4
+add	$sp,$sp,-8
+lw	$2,_framesize_fna
+sub	$sp,$sp,$2
+sw	$8,32($sp)
+sw	$9,28($sp)
+sw	$10,24($sp)
+sw	$11,20($sp)
+sw	$12,16($sp)
+sw	$13,12($sp)
+sw	$14,8($sp)
+sw	$15,4($sp)
+_begin_fna:
+li	$v0, 4
+la	$a0, _Str_fna0
+syscall
+# epilogue sequence
+_end_fna:
+lw	$8,32($sp)
+lw	$9,28($sp)
+lw	$10,24($sp)
+lw	$11,20($sp)
+lw	$12,16($sp)
+lw	$13,12($sp)
+lw	$14,8($sp)
+lw	$15,4($sp)
+lw	$ra, 4($fp)
+add	$sp, $fp, 4
+lw	$fp, 0($fp)
+jr	$ra
+.data
+_framesize_fna: .word 0
+_Str_fna0: .asciiz "a passed\n"
 .text
 main:
 # prologue sequence
@@ -18,54 +56,13 @@ sw	$13,12($sp)
 sw	$14,8($sp)
 sw	$15,4($sp)
 _begin_main:
-li	$9, 1
-sw	$9, _g
-li	$11, 2
-sw	$11, 4($fp)
-li	$13, 3
-sw	$13, 8($fp)
-li.s	$f2, 4.000000
-sw	$2, 12($fp)
-li	$15, 5
-sw	$15, 20($fp)
-li	$9, 6
-sw	$9, 20($fp)
-string0: .asciiz""\n""
-#print_string system call
-li	$v0, 4
-la	$a0, string0
-syscall
-string1: .asciiz""\n""
-#print_string system call
-li	$v0, 4
-la	$a0, string1
-syscall
-string2: .asciiz""\n""
-#print_string system call
-li	$v0, 4
-la	$a0, string2
-syscall
-string3: .asciiz""\n""
-#print_string system call
-li	$v0, 4
-la	$a0, string3
-syscall
-lw	$11, 20($fp)
-sw	$11, 4($fp)
-string4: .asciiz""\n""
-#print_string system call
-li	$v0, 4
-la	$a0, string4
-syscall
-lw	$13, 16($fp)
-sw	$13, 4($fp)
-string5: .asciiz""\n""
-#print_string system call
-li	$v0, 4
-la	$a0, string5
-syscall
-li	$14, 0
-move	$v0, $14
+addi	$sp, $sp, -4
+sw	$12, 4($sp)
+jal	fna
+addi	$sp, $sp, 4
+move	$0, $v0
+li	$8, 0
+move	$v0, $8
 j	_end_main
 # epilogue sequence
 _end_main:

@@ -221,17 +221,34 @@ class SymbolTableEntry {
     // stack
     void setOffset(int o) { _offset = o; }
     int offset() const { return _offset; }
-    void getLocation(char *outStr){
-        if(nestingLevel == 0) 
+    void getLocation(AST_NODE *node, char *outStr){
+        int off = 0;
+        if(node->getIDKind() == ARRAY_ID) 
+            off = getArrayOffset(node);
+
+        if(nestingLevel == 0)
             sprintf(outStr, "_%s", name);
         else 
-            sprintf(outStr, "%d($fp)", offset());
-    }
-    void getLocation(char *outStr, int off){
-        if(nestingLevel == 0)
-            getLocation(outStr);
-        else 
             sprintf(outStr, "%d($fp)", offset() - off*4);
+    }
+
+private:
+    int getArrayOffset(AST_NODE *node){
+        int offset = 0;
+        if(node->getIDKind() == ARRAY_ID){
+            TypeDescriptor *type = node->getSymbol()->attribute->getTypeDes();
+            AST_NODE *dim = node->child;
+            int dimension = 0;
+            while(dim){
+                offset += dim->getConIntValue();
+                dim = dim->rightSibling;
+                if(!dim) break;
+
+                offset += type->getArrayDimensionSize(dimension);
+                dimension += 1;
+            }
+        }
+        return offset;
     }
 };
 

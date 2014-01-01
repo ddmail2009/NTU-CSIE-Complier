@@ -3,12 +3,16 @@
 #include <string.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <vector>
 
 #include "codeGen.h"
 #include "header.h"
 #include "symbolTable.h"
 #include "gen-part.h"
+
 FILE *f;
+std::vector<const char*> strConst;
+const char* funcName;
 
 void DebugInfo(AST_NODE *node, const char *format, ...){
 #ifdef DEBUG
@@ -63,10 +67,12 @@ void genDeclareNode(AST_NODE *node){
         case FUNCTION_DECL:
         {
             AST_NODE *nameNode = node->child->rightSibling;
-            gen_head(nameNode->getIDName());
-            gen_prologue(nameNode->getIDName());
+            funcName = nameNode->getIDName();
+            gen_head(funcName);
+            gen_prologue(funcName);
             genGeneralNodeWithSibling(node->child);
-            gen_epilogue(nameNode->getIDName(), 0);
+            gen_epilogue(funcName, 0);
+            gen_epiDataField(0); 
             break;
         }
         case FUNCTION_PARAMETER_DECL:
@@ -74,6 +80,15 @@ void genDeclareNode(AST_NODE *node){
         default:
             DebugInfo(node, "Unknown DeclKind: %d", node->getDeclKind());
     }
+}
+
+void gen_epiDataField(int offset){
+    CodeGenStream(".data");
+    CodeGenStream("_framesize_%s: .word %d", funcName, offset);
+    for(std::vector<const char*>::size_type i=0; i!=strConst.size(); i++){
+        CodeGenStream("_Str_%s%d: .asciiz %s", funcName, i, strConst[i]);
+    }
+    strConst.clear();
 }
 
 void genStmtNode(AST_NODE *node){
@@ -110,12 +125,14 @@ void genAssignStmt(AST_NODE *node){
     AST_NODE *leftValue = node->child;
     AST_NODE *rightValue = node->child->rightSibling;
 
-    leftValue->setTemporaryPlace(leftValue->getDataType());
     genExprRelatedNode(rightValue);
     char location[1024];
-    leftValue->getSymbol()->getLocation(location);
+    leftValue->getSymbol()->getLocation(leftValue, location);
 
-    CodeGenStream("sw\t$%d, %s", rightValue->getTemporaryPlace(), location);
+    if(leftValue->getSymbol()->attribute->getDataType() == INT_TYPE)
+        CodeGenStream("sw\t$%s, %s", rightValue->getTemporaryPlace(), location);
+    else 
+        CodeGenStream("s.s\t$%s, %s", rightValue->getTemporaryPlace(), location);
 }
 
 void genForStmt(AST_NODE* node){
@@ -132,7 +149,7 @@ void genForStmt(AST_NODE* node){
     genGeneralNode(initNode);
     CodeGenStream("%s:", ForStmtTag);
     genAssignOrExpr(conditionNode);
-    CodeGenStream("beqz\t$%d, _End%s", conditionNode->getTemporaryPlace(), ForStmtTag);
+    CodeGenStream("beqz\t$%s, _End%s", conditionNode->getTemporaryPlace(), ForStmtTag);
     genGeneralNode(stepNode);
     genGeneralNode(blockNode);
     CodeGenStream("j\t%s", ForStmtTag);
@@ -150,29 +167,12 @@ void genWhileStmt(AST_NODE* node){
 
     CodeGenStream("%s:", WhileStmtTag);
     genAssignOrExpr(conditionNode);
-    CodeGenStream("beqz\t$%d, _End%s", conditionNode->getTemporaryPlace(), WhileStmtTag);
+    CodeGenStream("beqz\t$%s, _End%s", conditionNode->getTemporaryPlace(), WhileStmtTag);
     genGeneralNode(blockNode);
     CodeGenStream("j\t%s", WhileStmtTag);
     CodeGenStream("_End%s:", WhileStmtTag);
 }
 
-int getArrayOffset(AST_NODE *node){
-    int offset = 0;
-    if(node->getIDKind() == ARRAY_ID){
-        TypeDescriptor *type = node->getSymbol()->attribute->getTypeDes();
-        AST_NODE *dim = node->child;
-        int dimension = 0;
-        while(dim){
-            offset += dim->getConIntValue();
-            dim = dim->rightSibling;
-            if(!dim) break;
-
-            offset += type->getArrayDimensionSize(dimension);
-            dimension += 1;
-        }
-    }
-    return offset;
-}
 
 void genExprRelatedNode(AST_NODE *node){
     switch(node->nodeType){
@@ -186,13 +186,13 @@ void genExprRelatedNode(AST_NODE *node){
         case IDENTIFIER_NODE:
         {
             //TODO
-            int offset = getArrayOffset(node);
-
             char location[1024];
-            node->setTemporaryPlace(node->getDataType());
-            node->getSymbol()->getLocation(location, offset);
-            DebugInfo(node, "IDName: %s, location: %s", node->getIDName(), location);
-            CodeGenStream("lw\t$%d, %s", node->getTemporaryPlace(), location);
+            node->setTemporaryPlace();
+            node->getSymbol()->getLocation(node, location);
+            if(node->getDataType() == FLOAT_TYPE)
+                CodeGenStream("l.s\t$%s, %s", node->getTemporaryPlace(), location);
+            else    
+                CodeGenStream("lw\t$%s, %s", node->getTemporaryPlace(), location);
             break;
         }
         case CONST_VALUE_NODE:
@@ -209,28 +209,66 @@ void genWriteFunction(AST_NODE *node){
 
     switch(paramNode->type()){
         case IDENTIFIER_NODE:
-            DebugInfo(node, "write paramNode, IDKind: %d", paramNode->getIDKind());
+        {
+            char location[1024];
+            SymbolTableEntry *entry = paramNode->getSymbol();
+            entry->getLocation(paramNode, location);
+            switch(entry->attribute->getTypeDes()->getDataType()){
+                case INT_TYPE:
+                    CodeGenStream("li\t$v0, 1");
+                    CodeGenStream("lw\t$a0, %s", location);
+                    break;
+                case FLOAT_TYPE:
+                    CodeGenStream("li\t$v0, 2");
+                    CodeGenStream("l.s\t$f12, %s", location);
+                    break;
+                default:
+                    DebugInfo(paramNode, "IDNode type: %d shouldn't happen in write parameter", entry->attribute->getTypeDes()->getDataType());
+                    break;
+            }
             break;
+        }
         case CONST_VALUE_NODE:
         {
             switch(paramNode->getConType()){
                 case INTEGERC:
-                    genSysCall(SysCallParameter(PRINT_INT, paramNode->getConIntValue()));
+                    CodeGenStream("li\t$v0, 1");
+                    CodeGenStream("li\t$a0, %d", paramNode->getConIntValue());
                     break;
                 case FLOATC:
-                    genSysCall(SysCallParameter(PRINT_FLOAT, paramNode->getConFloatValue()));
+                    CodeGenStream("li\t$v0, 2");
+                    CodeGenStream("li.s\t$f12, %lf", paramNode->getConFloatValue());
                     break;
                 case STRINGC:
-                    DebugInfo(paramNode, "STRINGC : %s", paramNode->getCharPtrValue());
-                    genSysCall(SysCallParameter(PRINT_STRING, paramNode->getCharPtrValue()));
-                    break;
-                default:
+                    CodeGenStream("li\t$v0, 4");
+                    CodeGenStream("la\t$a0, _Str_%s%d", funcName, strConst.size());
+                    strConst.push_back(paramNode->getCharPtrValue());
                     break;
             }
             break;
         }
         default:
             DebugInfo(node, "Unhandle case in genWriteFunction, type: %d", paramNode->type());
+    }
+    CodeGenStream("syscall");
+}
+
+void genReadFunction(AST_NODE *node){
+    node->setTemporaryPlace();
+    switch(node->getDataType()){
+        case INT_TYPE:
+            CodeGenStream("li\t$v0, 5");
+            CodeGenStream("syscall");
+            CodeGenStream("move\t$%s, $v0", node->getTemporaryPlace());
+            break;
+        case FLOAT_TYPE:
+            CodeGenStream("li\t$v0, 6");
+            CodeGenStream("syscall");
+            CodeGenStream("mov.s\t$%s, $f0", node->getTemporaryPlace());
+            break;
+        default:
+            DebugInfo(node, "Unhandle case in genReadFunction, type: %d", node->type());
+            break;
     }
 }
 
@@ -243,10 +281,12 @@ void genFunctionCall(AST_NODE *node){
     if(!strcmp(funcName, "write"))
         genWriteFunction(node);
     else if(!strcmp(funcName, "read"))
-        ;//genReadFunction(node);
+        genReadFunction(node);
+    else if(!strcmp(funcName, "fread"))
+        genReadFunction(node);
     else {
-        genGeneralNode(paramListNode->child);
-        node->setTemporaryPlace(node->getDataType());
+        genGeneralNode(paramListNode);
+        node->setTemporaryPlace();
 
         // TODO
         // Need to calculate the function offset
@@ -254,7 +294,7 @@ void genFunctionCall(AST_NODE *node){
         CodeGenStream("sw\t$12, 4($sp)");
         CodeGenStream("jal\t%s", funcNameNode->getIDName());
         CodeGenStream("addi\t$sp, $sp, 4");
-        CodeGenStream("move\t$%d, $v0", node->getTemporaryPlace());
+        CodeGenStream("move\t$%s, $v0", node->getTemporaryPlace());
     }
 }
 
@@ -276,19 +316,9 @@ void genExprNode(AST_NODE *node){
 
 void genReturnStmt(AST_NODE *node){
     DebugInfo(node, "gen return stmt");
-
-    AST_NODE *cur = node;
-    while(cur){
-        if(cur->type() == DECLARATION_NODE && cur->getDeclKind() == FUNCTION_DECL)
-            break;
-        cur = cur->parent;
-    }
-    assert(cur!=NULL);
-    cur = cur->child->rightSibling;
-
     genExprRelatedNode(node->child);
-    CodeGenStream("move\t$v0, $%d", node->child->getTemporaryPlace());
-    CodeGenStream("j\t_end_%s", cur->getIDName());
+    CodeGenStream("move\t$v0, $%s", node->child->getTemporaryPlace());
+    CodeGenStream("j\t_end_%s", funcName);
 }
 
 void genAssignOrExpr(AST_NODE *node){
@@ -314,11 +344,10 @@ void genIfStmt(AST_NODE *node){
     if(elseNode->type() != NUL_NODE){
         hasElse = true;
         getTagName("_IfBranch", node->child, branchName);
-    
     }
 
     genAssignOrExpr(conditionNode);
-    if(hasElse) CodeGenStream("beqz\t$%d, %s", conditionNode->getTemporaryPlace(), branchName);
+    if(hasElse) CodeGenStream("beqz\t$%s, %s", conditionNode->getTemporaryPlace(), branchName);
 
     genGeneralNode(blockNode);
     if(hasElse){

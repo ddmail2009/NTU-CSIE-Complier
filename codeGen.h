@@ -18,6 +18,7 @@ void genStmtNode(AST_NODE *node);
 void genAssignOrExpr(AST_NODE *node);
 void genFunctionCall(AST_NODE *node);
 void genAssignStmt(AST_NODE *node);
+void gen_epiDataField(int offset);
 
 // Starter Function
 void codeGen(AST_NODE* prog);
