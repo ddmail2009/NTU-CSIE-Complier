@@ -17,10 +17,11 @@ class Register{
         void operand(BINARY_OPERATOR op, const Register *left, const int value);
         void operand(BINARY_OPERATOR op, const Register *left, const double value);
         void operand(BINARY_OPERATOR op, const Register *left, const Register *right);
-        void operand(UNARY_OPERATOR op, const Register *left, const Register *right);
+        void operand(UNARY_OPERATOR op, const Register *from);
 
         void load(int value);
         void load(double value);
+        void load(const char *label);
         void load(const Register *from);
         void load(const Address &addr, bool loadWord = true);
 
@@ -80,12 +81,12 @@ class RegisterSystem{
         void saveCalleeReg(){
             Address address(getReg("$sp"));
             for(int i=0; i<8; i++)
-                callerReg[i]->save(address + 4*i + 4);
+                calleeReg[i]->save(address + 4*i + 4);
         }
         void restoreCalleeReg(){
             Address address(getReg("$sp"));
             for(int i=0; i<8; i++)
-                callerReg[i]->load(address + 4*i + 4);
+                calleeReg[i]->load(address + 4*i + 4);
         }
 
         Register *getFit(const Address &addr){

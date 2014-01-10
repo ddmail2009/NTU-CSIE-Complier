@@ -251,6 +251,24 @@ void genExprRelatedNode(AST_NODE *node){
 void genWriteFunction(AST_NODE *node){
     AST_NODE *paramNode = node->child->rightSibling->child;
 
+    genGeneralNode(paramNode);
+    Register *reg = paramNode->getTempReg();
+
+    DebugInfo(node, "register param @ %s", reg->name());
+    switch(paramNode->getDataType()){
+        case INT_TYPE:
+            genSyscall(PRINT_INT, reg);
+            break;
+        case FLOAT_TYPE:
+            genSyscall(PRINT_FLOAT, reg);
+            break;
+        case CONST_STRING_TYPE:
+            genSyscall(PRINT_STRING, reg);
+            break;
+        default:
+            ;
+    }
+    return ;
     switch(paramNode->type()){
         case IDENTIFIER_NODE:
         {
@@ -284,7 +302,7 @@ void genWriteFunction(AST_NODE *node){
                     strConst.push_back(paramNode->getCharPtrValue());
                     break;
             }
-    CodeGenStream("syscall");
+            CodeGenStream("syscall");
             break;
         }
         default:
@@ -416,31 +434,14 @@ void genOpStmt(AST_NODE *node){
 
             Register *leftReg = left->getTempReg();
             Register *rightReg = right->getTempReg();
-            DebugInfo(left, "left addr: %p", left);
-            DebugInfo(right, "right addr: %p", right);
-            DebugInfo(node, "this addr: %p", node);
-
             Register *reg = node->getTempReg(RegforceCaller);
             reg->operand(node->getBinaryOp(), leftReg, rightReg);
-            DebugInfo(node, "op result store in reg: %s", reg->name());
-            DebugInfo(node, "oriresult reg: %s, %p, this:%p", node->reg->name(), node->reg->target, node);
             break;
         }
         case UNARY_OPERATION:
         {
-            switch(node->getUnaryOp()){
-                case UNARY_OP_POSITIVE:
-                    CodeGenStream("abs\t$%d, $%d", node->getTempName(), node->getTempName());
-                    break;
-                case UNARY_OP_NEGATIVE:
-                    CodeGenStream("neg\t$%d, $%d", node->getTempName(), node->getTempName());
-                    break;
-                case UNARY_OP_LOGICAL_NEGATION:
-                    CodeGenStream("not\t$%d, $%d",node->getTempName(), node->getTempName());
-                    break;
-                default:
-                    break;
-            }
+            Register *reg = node->getTempReg(RegforceCaller);
+            reg->operand(node->getUnaryOp(), node->child->getTempReg());
         }
         default:
             break;
@@ -457,7 +458,10 @@ void genConStmt(AST_NODE *node){
             reg->load(node->getConFloatValue());
             break;
         case STRINGC:
-            DebugInfo(node, "Unhandle case in genExprRelatedNode:constValue, conType: %d", node->getConType());
+            char tmp[10];
+            sprintf(tmp, "_Str_%s%d", curFuncName, strConst.size());
+            reg->load(tmp);
+            strConst.push_back(node->getCharPtrValue());
             break;
         default:
             DebugInfo(node, "Unhandle case in genExprRelatedNode:constValue, conType: %d", node->getConType());
@@ -481,7 +485,8 @@ void genGeneralNode(AST_NODE *node){
             genDeclareNode(node);
             break;
         case IDENTIFIER_NODE:
-            ;
+            if(node->parent->type() != DECLARATION_NODE)
+                node->getTempReg();
             break;
         case BLOCK_NODE:
             genGeneralNodeWithSibling(node->child);
@@ -493,6 +498,7 @@ void genGeneralNode(AST_NODE *node){
             genExprNode(node);
             break;
         case CONST_VALUE_NODE:
+            genConStmt(node);
             break;
         case NUL_NODE:
             break;
@@ -501,9 +507,11 @@ void genGeneralNode(AST_NODE *node){
             break;
         case STMT_LIST_NODE:
             genGeneralNodeWithSibling(node->child);
+            if(node->child) node->setRegister(node->child->getTempReg());
             break;
         case VARIABLE_DECL_LIST_NODE:
             genGeneralNodeWithSibling(node->child);
+            if(node->child) node->setRegister(node->child->getTempReg());
             break;
         case NONEMPTY_ASSIGN_EXPR_LIST_NODE:
             genGeneralNodeWithSibling(node->child);

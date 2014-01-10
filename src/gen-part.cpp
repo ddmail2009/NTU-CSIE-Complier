@@ -104,6 +104,7 @@ void genSyscall(const SystemCallCode &code, Register *value){
                 break;
             }
         case EXIT:
+            CodeGenStream("syscall");
             break;
         default:
             CodeGenStream("#Unhandled case in our C-- project, error syscall code");

@@ -74,15 +74,40 @@ void Register::operand(BINARY_OPERATOR op, const Register *left, const Register 
         CodeGenStream("%s\t%s, %s", Binarycommand[op][FLOAT_TYPE], left->name(), right->name());
         CodeGenStream("bc1f _False%d", branchIndex);
         CodeGenStream("li\t%s, %d", name(), negate[op]);
+        CodeGenStream("j\tEnd_False%d", branchIndex);
         CodeGenStream("_False%d:", branchIndex);
         CodeGenStream("li\t%s, %d", name(), !negate[op]);
+        CodeGenStream("End_False%d:", branchIndex);
         branchIndex ++;
     } else 
         CodeGenStream("%s\t%s, %s, %s", Binarycommand[op][type()], name(), left->name(), right->name());
     this->dirty = true;
 }
 
-void Register::operand(UNARY_OPERATOR op, const Register *left, const Register *right){
+void Register::operand(UNARY_OPERATOR op, const Register *from){
+    // TODO, have to consider float case
+    switch(op){
+        case UNARY_OP_POSITIVE:
+            CodeGenStream("abs\t%s, %s", name(), from->name());
+            break;
+        case UNARY_OP_NEGATIVE:
+            // -a = ~a + 1
+            CodeGenStream("not\t%s, %s", name(), from->name());
+            operand(BINARY_OP_ADD, this, 1);
+            break;
+        case UNARY_OP_LOGICAL_NEGATION:
+            static int branchIndex = 0;
+            CodeGenStream("beqz\t%s, _TrueNot%d", from->name(), branchIndex);
+            load(0);
+            CodeGenStream("j\t_EndNot%d", branchIndex);
+            CodeGenStream("_TrueNot%d:", branchIndex);
+            load(1);
+            CodeGenStream("_EndNot%d:", branchIndex);
+            branchIndex ++;
+            break;
+        default:
+            ;
+    }
     this->dirty = true;
 }
 
@@ -96,6 +121,14 @@ void Register::load(double value){
     else if(type() == FLOAT_TYPE)
         CodeGenStream("li.s\t%s, %lf", name(), (double) value);
 
+    this->dirty = true;
+}
+
+void Register::load(const char *label){
+    if(type() == INT_TYPE)
+        CodeGenStream("la\t%s, %s", name(), label);
+    else 
+        CodeGenStream("la\t%s, %s", name(), label);
     this->dirty = true;
 }
 
@@ -120,11 +153,8 @@ void Register::load(const Address &addr, bool loadword){
     if(type() == FLOAT_TYPE){
         CodeGenStream("l.s\t%s, %s", name(), addr.getName());
     } else {
-        char word[][3] = {"lw", "la"};
-        int index = 0;
-        if(addr.isLabel() && !loadword) index = 1;
-
-        CodeGenStream("%s\t%s, %s", word[index], name(), addr.getName());
+        if(addr.isLabel() && !loadword) load(addr.getName());
+        else CodeGenStream("lw\t%s, %s", name(), addr.getName());
     }
     this->dirty = true;
 }
@@ -139,6 +169,7 @@ void Register::save(){
 }
 
 void Register::save(const Address &addr){
+    CodeGenStream("#\e[32m register swap, register '%s' save to addr: %s\e[m", name(), addr.getName());
     if(type() == FLOAT_TYPE)
         CodeGenStream("s.s\t%s, %s", name(), addr.getName());
     else 
@@ -231,6 +262,8 @@ RegisterSystem::RegisterSystem(){
     registers.push_back(sp);
     Register *a0 = new Register("$a0", INT_TYPE);
     registers.push_back(a0);
+    Register *zero = new Register("$zero", INT_TYPE);
+    registers.push_back(zero);
 }
 
 
@@ -286,7 +319,7 @@ Register *AST_NODE::getTempReg(int option){
     if(!isReset && reg != NULL && reg->fit(this)){;
     } else if(!isReset && this->type() == IDENTIFIER_NODE && regSystem.getFit(this->getSymbol()->getAddress()) != NULL){
         reg = regSystem.getFit(getSymbol()->getAddress());
-        fprintf(stderr, "found register: %s in same symbol\n", reg->name());
+        fprintf(stderr, "found register: %s in same symbol: %s\n", reg->name(), this->getSymbol()->name);
     } else {
         Register *tmp = regSystem.getReg(getDataType(), isCaller);
         setRegister(tmp, !isDisableload);
