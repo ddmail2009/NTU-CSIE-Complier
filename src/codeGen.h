@@ -4,6 +4,8 @@
 #include "header.h"
 #include <vector>
 
+class Register;
+
 // GenSpecific Type Node
 void genIfStmt(AST_NODE *node);
 void genWhileStmt(AST_NODE* node);
@@ -24,9 +26,10 @@ void gen_epiDataField();
 void codeGen(AST_NODE* prog);
 
 // Utility Function
-void genMoveCommand(DATA_TYPE srctype, DATA_TYPE desttype, const char* src, const char* dest);
 void genGeneralNodeWithSibling(AST_NODE *node);
 void genGeneralNode(AST_NODE *node);
 void CodeGenStream(const char *format, ...);
 void DebugInfo(AST_NODE *node, const char *format, ...);
+void genConStmt(AST_NODE *node);
+void genOpStmt(AST_NODE *node);
 #endif

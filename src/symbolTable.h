@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-
+#include "Register.h"
 //SYMBOL_TABLE_PREINSERT_NAME
 #define SYMBOL_TABLE_INT_NAME "int"
 #define SYMBOL_TABLE_FLOAT_NAME "float"
@@ -203,7 +203,8 @@ class SymbolTableEntry {
     SymbolAttribute* attribute;
     int nestingLevel;
     // offset is for local variable allocation $fp + offset
-    int _offset;
+    // address contains offset and the base register
+    const Address *address;
 
     SymbolTableEntry(int level, const char *n = NULL, SymbolAttribute *attr = NULL):
         nextInHashChain(NULL),
@@ -212,26 +213,20 @@ class SymbolTableEntry {
         sameNameInOuterLevel(NULL),
         attribute(attr),
         nestingLevel(level),
-        _offset(0) {
+        address(NULL){
             assert(n != NULL);
             strcpy(name, n);
     }
 
     // when this variable is local (in the precedure), set the offset in the
     // stack
-    void setOffset(int o) { _offset = o; }
-    int offset() const { return _offset; }
-    void getLocation(AST_NODE *node, char *outStr){
-        int off = 0;
-        if(node->getIDKind() == ARRAY_ID) 
-            off = getArrayOffset(node);
-
-        if(nestingLevel == 0)
-            sprintf(outStr, "_%s", name);
-        else 
-            sprintf(outStr, "%d($fp)", offset() - off*4);
+    void setAddress(const Address *addr){
+        address = addr;
     }
 
+    const Address &getAddress(){
+        return *address;
+    }
 private:
     int getArrayOffset(AST_NODE *node){
         int offset = 0;

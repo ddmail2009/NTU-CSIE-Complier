@@ -1,18 +1,15 @@
-int result;
-int fact(int n){
-    if(n == 1)
-    {
-        return n;
-    } 
-    else 
-    {
-        return (n*fact(n-1));
-    }
-}
+int j = 4;
+float d = 2.33;
 
 int main(){
-    int n;
-    if(n > 1) result = fact(n);
-    else result = 1;
-    fact(2);
+    int i;
+    float d = 2.33;
+
+    write(d);
+    write("\n");
+
+    if(d == 3.3) write("false");
+    else write("correct");
+    write("\n");
+    write("good");
 }

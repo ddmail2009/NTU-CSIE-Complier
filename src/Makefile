@@ -8,7 +8,7 @@ YACCFLAG = -d
 LIBS = -lfl 
 DEBUG = 1
 
-parser: parser.tab.o alloc.o functions.o symbolTable.o semanticAnalysis.o codeGen.o gen-part.o
+parser: parser.tab.o alloc.o functions.o symbolTable.o semanticAnalysis.o codeGen.o gen-part.o Register.o
 	$(CC) -o $(TARGET) $+ $(LIBS)
 
 parser.tab.o: parser.tab.c lex.yy.c alloc.o functions.c symbolTable.o semanticAnalysis.o
@@ -33,6 +33,13 @@ functions.o: functions.c
 	$(CC) -c functions.c
 
 codeGen.o gen-part.o: codeGen.c gen-part.cpp
+ifeq ($(DEBUG), 0)
+	$(CC) -c $+
+else
+	$(CC) -c $+ -D DEBUG
+endif
+
+Register.o: Register.cpp
 ifeq ($(DEBUG), 0)
 	$(CC) -c $+
 else
