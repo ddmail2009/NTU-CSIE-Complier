@@ -217,16 +217,6 @@ class SymbolTableEntry {
             assert(n != NULL);
             strcpy(name, n);
     }
-
-    // when this variable is local (in the precedure), set the offset in the
-    // stack
-    void setAddress(const Address *addr){
-        address = addr;
-    }
-
-    const Address &getAddress(){
-        return *address;
-    }
 private:
     int getArrayOffset(AST_NODE *node){
         int offset = 0;

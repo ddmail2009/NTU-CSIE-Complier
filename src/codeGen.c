@@ -12,93 +12,61 @@
 #include "gen-part.h"
 
 std::vector<const char*> strConst;
-const char* curFuncName;
-int curFuncOffset;
-extern RegisterSystem regSystem;
-
-/* Utility Function */
-void DebugInfo(AST_NODE *node, const char *format, ...){
-#ifdef DEBUG
-    va_list args;
-    fprintf(stderr, "\e[31mline[%d]: ", node->linenumber);
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    fprintf(stderr, "\e[m\n");
-    va_end(args);
-#endif
-}
-
-void CodeGenStream(const char *format, ...){
-    static FILE *f = fopen("output.s", "w");
-    char indention[1024] = "";
-    char output[1024];
-
-    va_list args;
-    va_start(args, format);
-    char formation[1024];
-    vsprintf(formation, format, args);
-    sprintf(output, "%s%s\n", indention, formation);
-    va_end(args);
-
-    fprintf(f, output);
-    fprintf(stderr, output);
-}
-
-void getTagName(const char *prefix, AST_NODE *node, char *name){
-    sprintf(name, "%s_%d_%d", prefix, node->linenumber, node->type());
-}
-
+RegisterSystem regSystem;
+ARSystem ar;
 
 /* Starting function */
 void codeGen(AST_NODE* prog){
     genGeneralNode(prog);
 }
 
-void genVariable(AST_NODE *IDNode){
+void genVariable(AST_NODE *IDNode, bool isParam = false){
     SymbolTableEntry *entry = IDNode->getSymbol();
     TypeDescriptor *type = entry->attribute->getTypeDes();
 
-    // global variable
+    ar.addVariable(entry, isParam);
+    // global variable, store in global data field
     if(entry->nestingLevel == 0) {
+        Address addr = ar.getAddress(IDNode);
         CodeGenStream(".data");
         // SCALAR TYPE
         if(IDNode->getIDKind() == NORMAL_ID){
             if(type->getDataType() == INT_TYPE)
-                CodeGenStream("_%s:\t.word %d", entry->name, 0);
+                CodeGenStream("%s:\t.word %d", addr.getName(), 0);
             else if(type->getDataType() == FLOAT_TYPE)
-                CodeGenStream("_%s:\t.float %lf", entry->name, 0.0);
+                CodeGenStream("%s:\t.float %lf", addr.getName(), 0.0);
         }
         // ARRAY TYPE
         else if(IDNode->getIDKind() == ARRAY_ID){
-            int size = 0;
-            for(int i=0; i<type->getDimension(); i++)
-                size += type->getArrayDimensionSize(i);
-            CodeGenStream("_%s:\t.space %d", entry->name, size);
+            CodeGenStream("%s:\t.space %d", addr.getName(), type->size());
         }
-        //ARRAY TYPE
+        // SCALAR WITH INIT 
         else if(IDNode->getIDKind() == WITH_INIT_ID){
             if(type->getDataType() == INT_TYPE) 
-                CodeGenStream("_%s:\t.word %d", entry->name, IDNode->child->getConIntValue());
+                CodeGenStream("%s:\t.word 0", addr.getName());
             else if(type->getDataType() == FLOAT_TYPE)
-                CodeGenStream("_%s:\t.float %lf", entry->name, IDNode->child->getConFloatValue());
+                CodeGenStream("%s:\t.float 0.0", addr.getName());
+            // inline sub routine would called when main function prologue
+            CodeGenStream(".text");
+
+            char routineStart[1024], routineEnd[1024];
+            ar.getTag("_InlineSubRoutine_Start", routineStart);
+            ar.getTag("_InlineSubRoutine_End", routineEnd);
+            CodeGenStream("%s:", routineStart);
+            genExprRelatedNode(IDNode->child);
+            Register *reg = IDNode->child->getTempReg();
+            reg->save(addr);
+            CodeGenStream("j %s", routineEnd);
+            ar.globleInitRoutine(routineStart, routineEnd);
         }
-        entry->setAddress(new Address("_%s", entry->name));
     }
-    // local variable
+    // local variable, store in local ar field
     else {
-        curFuncOffset -= type->size();
-
-        Register *fp = regSystem.getReg("$fp");
-        entry->setAddress(new Address(fp, curFuncOffset));
-
         if(IDNode->getIDKind() == WITH_INIT_ID){
             genExprRelatedNode(IDNode->child);
-            if(type->getDataType() == INT_TYPE)
-                CodeGenStream("sw\t%s, %s", IDNode->child->getTempName(), entry->getAddress().getName());
-            else if(type->getDataType() == FLOAT_TYPE)
-                CodeGenStream("s.s\t%s, %s", IDNode->child->getTempName(), entry->getAddress().getName());
+            Register *reg = IDNode->getTempReg(RegDisableload);
+            reg->load(IDNode->child->getTempReg());
         }
-        DebugInfo(IDNode, "set ID: %s to offset: %d", entry->name, curFuncOffset);
     }
 }
 
@@ -106,41 +74,38 @@ void genDeclareNode(AST_NODE *node){
     DebugInfo(node, "gen declare node");
     switch(node->getDeclKind()){
         case VARIABLE_DECL:
-            node = node->child->rightSibling;
-            while(node){
-                genVariable(node);
-                node = node->rightSibling;
+            {
+                node = node->child->rightSibling;
+                while(node){
+                    genVariable(node);
+                    node = node->rightSibling;
+                }
+                break;
             }
-            break;
         case TYPE_DECL:
             DebugInfo(node, "TypeDef node, doesn't need to do anything");
             break;
         case FUNCTION_DECL:
             {
                 AST_NODE *nameNode = node->child->rightSibling;
-                curFuncName = nameNode->getIDName();
-                curFuncOffset = 0;
-                gen_head(curFuncName);
-                gen_prologue(curFuncName);
+                ar.prologue(nameNode->getIDName());
                 genGeneralNodeWithSibling(node->child);
-                gen_epilogue(curFuncName);
-                gen_epiDataField();
+                ar.epilogue();
                 break;
             }
         case FUNCTION_PARAMETER_DECL:
+            {
+                node = node->child->rightSibling;
+                while(node){
+                    genVariable(node, true);
+                    node = node->rightSibling;
+                }
+                break;
+            }
             break;
         default:
             DebugInfo(node, "Unknown DeclKind: %d", node->getDeclKind());
     }
-}
-
-void gen_epiDataField(){
-    CodeGenStream(".data");
-    CodeGenStream("_framesize_%s: .word %d", curFuncName, curFuncOffset+32);
-    for(std::vector<const char*>::size_type i=0; i!=strConst.size(); i++){
-        CodeGenStream("_Str_%s%d: .asciiz %s", curFuncName, i, strConst[i]);
-    }
-    strConst.clear();
 }
 
 void genStmtNode(AST_NODE *node){
@@ -188,7 +153,7 @@ void genForStmt(AST_NODE* node){
     DebugInfo(node->child, "gen For stmt");
 
     char ForStmtTag[1024];
-    getTagName("_FOR", node->child, ForStmtTag);
+    ar.getTag("_FOR", ForStmtTag);
 
     AST_NODE *initNode = node->child;
     AST_NODE *conditionNode = initNode->rightSibling;
@@ -198,7 +163,7 @@ void genForStmt(AST_NODE* node){
     genGeneralNode(initNode);
     CodeGenStream("%s:", ForStmtTag);
     genGeneralNode(conditionNode);
-    CodeGenStream("beqz\t%s, _End%s", conditionNode->getTempName(), ForStmtTag);
+    conditionNode->getTempReg()->branch("_End%s", ForStmtTag);
     genGeneralNode(blockNode);
     genGeneralNode(stepNode);
     CodeGenStream("j\t%s", ForStmtTag);
@@ -209,7 +174,7 @@ void genWhileStmt(AST_NODE* node){
     DebugInfo(node->child, "gen While stmt");
 
     char WhileStmtTag[1024];
-    getTagName("_WHILE", node->child, WhileStmtTag);
+    ar.getTag("_WHILE", WhileStmtTag);
 
     AST_NODE *conditionNode = node->child;
     AST_NODE *blockNode = conditionNode->rightSibling;
@@ -253,8 +218,6 @@ void genWriteFunction(AST_NODE *node){
 
     genGeneralNode(paramNode);
     Register *reg = paramNode->getTempReg();
-
-    DebugInfo(node, "register param @ %s", reg->name());
     switch(paramNode->getDataType()){
         case INT_TYPE:
             genSyscall(PRINT_INT, reg);
@@ -269,45 +232,6 @@ void genWriteFunction(AST_NODE *node){
             ;
     }
     return ;
-    switch(paramNode->type()){
-        case IDENTIFIER_NODE:
-        {
-            Register *reg = paramNode->getTempReg();
-            switch(paramNode->getDataType()){
-                case INT_TYPE:
-                    genSyscall(PRINT_INT, reg);
-                    break;
-                case FLOAT_TYPE:
-                    genSyscall(PRINT_FLOAT, reg);
-                    break;
-                default:
-                    break;
-            }
-            break;
-        }
-        case CONST_VALUE_NODE:
-        {
-            switch(paramNode->getConType()){
-                case INTEGERC:
-                    CodeGenStream("li\t$v0, 1");
-                    CodeGenStream("li\t$a0, %d", paramNode->getConIntValue());
-                    break;
-                case FLOATC:
-                    CodeGenStream("li\t$v0, 2");
-                    CodeGenStream("li.s\t$f12, %lf", paramNode->getConFloatValue());
-                    break;
-                case STRINGC:
-                    CodeGenStream("li\t$v0, 4");
-                    CodeGenStream("la\t$a0, _Str_%s%d", curFuncName, strConst.size());
-                    strConst.push_back(paramNode->getCharPtrValue());
-                    break;
-            }
-            CodeGenStream("syscall");
-            break;
-        }
-        default:
-            DebugInfo(node, "Unhandle case in genWriteFunction, type: %d", paramNode->type());
-    }
 }
 
 void genReadFunction(AST_NODE *node){
@@ -315,19 +239,9 @@ void genReadFunction(AST_NODE *node){
     switch(node->getDataType()){
         case INT_TYPE:
             genSyscall(READ_INT, reg);
-            /*
-            CodeGenStream("li\t$v0, 5");
-            CodeGenStream("syscall");
-            genMoveCommand(INT_TYPE, node->getDataType(), "v0", node->getTempName());
-            */
             break;
         case FLOAT_TYPE:
             genSyscall(READ_FLOAT, reg);
-            /*
-            CodeGenStream("li\t$v0, 6");
-            CodeGenStream("syscall");
-            genMoveCommand(FLOAT_TYPE, node->getDataType(), "f0", node->getTempName());
-            */
             break;
         default:
             DebugInfo(node, "Unhandle case in genReadFunction, type: %d", node->type());
@@ -352,14 +266,28 @@ void genFunctionCall(AST_NODE *node){
 
         // TODO
         // Need to calculate the function offset
-        CodeGenStream("addi\t$sp, $sp, -4");
-        CodeGenStream("sw\t$12, 4($sp)");
-        CodeGenStream("jal\t%s", curFuncNameNode->getIDName());
-        CodeGenStream("addi\t$sp, $sp, 4");
-        Register *reg = node->getTempReg();
+        //regSystem.saveCallerReg();
+
+        Register *sp = regSystem.getReg("$sp");
+        int paramleft = curFuncNameNode->getSymbol()->attribute->getFuncSig()->getParameterCount();
+        sp->operand(BINARY_OP_SUB, sp, 4*paramleft);
+
+        AST_NODE *param = paramListNode->child;
+        for(int i=0; i<paramleft; i++){
+            genGeneralNode(param);
+            param->getTempReg()->save(Address(sp) + 4*i + 4);
+            param = param->rightSibling;
+        }
+        CodeGenStream("jal\t%s", curFuncName);
+        sp->operand(BINARY_OP_ADD, sp, 4*paramleft);
         Register *v0 = regSystem.getReg("$v0");
+        Register *reg = node->getTempReg();
         reg->load(v0);
-        //genMoveCommand(INT_TYPE, node->getDataType(), "v0", node->getTempName());
+        //CodeGenStream("addi\t$sp, $sp, -4");
+        //CodeGenStream("sw\t$12, 4($sp)");
+        //CodeGenStream("jal\t%s", curFuncNameNode->getIDName());
+        //CodeGenStream("addi\t$sp, $sp, 4");
+        //sp->operand(BINARY_OP_ADD, sp, -offset);
     }
 }
 
@@ -389,7 +317,10 @@ void genReturnStmt(AST_NODE *node){
 
     Register *v0 = regSystem.getReg("$v0");
     v0->load(node->child->getTempReg());
-    CodeGenStream("j\t_end_%s", curFuncName);
+
+    char EndTag[1024];
+    ar.getEndTag(EndTag);
+    CodeGenStream("j\t%s", EndTag);
 }
 
 
@@ -398,7 +329,7 @@ void genIfStmt(AST_NODE *node){
     DebugInfo(node->child, "gen If stmt");
 
     char IfStmtTag[1024];
-    getTagName("_IF", node->child, IfStmtTag);
+    ar.getTag("_IF", IfStmtTag);
 
     AST_NODE* conditionNode = node->child;
     AST_NODE* blockNode = conditionNode->rightSibling;
@@ -408,11 +339,12 @@ void genIfStmt(AST_NODE *node){
     char branchName[1024];
     if(elseNode->type() != NUL_NODE){
         hasElse = true;
-        getTagName("_IfBranch", node->child, branchName);
+        ar.getTag("_IfBranch", branchName);
     }
 
     genGeneralNode(conditionNode);
-    if(hasElse) CodeGenStream("beqz\t%s, %s", conditionNode->getTempName(), branchName);
+    if(hasElse) 
+        conditionNode->getTempReg()->branch(branchName);
 
     genGeneralNode(blockNode);
     if(hasElse){
@@ -458,10 +390,9 @@ void genConStmt(AST_NODE *node){
             reg->load(node->getConFloatValue());
             break;
         case STRINGC:
-            char tmp[10];
-            sprintf(tmp, "_Str_%s%d", curFuncName, strConst.size());
-            reg->load(tmp);
-            strConst.push_back(node->getCharPtrValue());
+            ar.addVariable(node->getCharPtrValue());
+            // do not load word, instead load address, specify 'la' instead of 'lw'
+            reg->load(ar.getAddress(node), false);
             break;
         default:
             DebugInfo(node, "Unhandle case in genExprRelatedNode:constValue, conType: %d", node->getConType());
@@ -519,9 +450,7 @@ void genGeneralNode(AST_NODE *node){
             break;
         case NONEMPTY_RELOP_EXPR_LIST_NODE:
             genGeneralNodeWithSibling(node->child);
-            DebugInfo(node, "node child in reg: %s", node->child->getTempReg());
             node->setRegister(node->child->getTempReg());
-            DebugInfo(node, "result in reg: %s", node->getTempReg());
             break;
         default:
             DebugInfo(node, "Unknown Node type: %d", node->type());

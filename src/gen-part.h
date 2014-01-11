@@ -14,20 +14,7 @@ enum SystemCallCode {
   EXIT,
 };
 
-// this enum does nothing
-enum ReadSysCallType {
-  INT,
-  //FLOAT, // C-- only have float, but we use double instead
-  DOUBLE,
-  STRING,
-  CHAR
-};
-
-
+void CodeGenStream(const char *format, ...);
+void DebugInfo(AST_NODE *node, const char *format, ...);
 void genSyscall(const SystemCallCode &code, Register *value);
-int gen_head(const char *name);
-void gen_prologue(const char *functionName);
-void gen_epilogue(const char *functionName);
-
-
 #endif

@@ -1,4 +1,8 @@
 int func(int a, int b) {
+    write(a);
+    write("\n");
+    write(b);
+    write("\n");
     if (a>1) {
         return a*b-3;
     } else{
