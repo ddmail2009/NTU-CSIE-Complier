@@ -266,8 +266,6 @@ void genFunctionCall(AST_NODE *node){
 
         // TODO
         // Need to calculate the function offset
-        //regSystem.saveCallerReg();
-
         Register *sp = regSystem.getReg("$sp");
         int paramleft = curFuncNameNode->getSymbol()->attribute->getFuncSig()->getParameterCount();
         sp->operand(BINARY_OP_SUB, sp, 4*paramleft);
@@ -278,7 +276,10 @@ void genFunctionCall(AST_NODE *node){
             param->getTempReg()->save(Address(sp) + 4*i + 4);
             param = param->rightSibling;
         }
+        //regSystem.saveTempReg();
         CodeGenStream("jal\t%s", curFuncName);
+        regSystem.clearRegRecord();
+
         sp->operand(BINARY_OP_ADD, sp, 4*paramleft);
         Register *v0 = regSystem.getReg("$v0");
         Register *reg = node->getTempReg();
@@ -295,19 +296,52 @@ void genFunctionCall(AST_NODE *node){
 void genExprNode(AST_NODE *node){
     switch(node->getExprKind()){
         case BINARY_OPERATION:
-            DebugInfo(node, "gen left");
-            genExprRelatedNode(node->child);
-            DebugInfo(node, "gen right");
-            genExprRelatedNode(node->child->rightSibling);
-            break;
+            {
+                AST_NODE *left = node->child;
+                AST_NODE *right = node->child->rightSibling;
+
+                DebugInfo(node, "gen left");
+                genExprRelatedNode(left);
+
+                char branchTest[1024];
+                ar.getTag("LogicalShort", branchTest);
+
+                if(node->getBinaryOp() == BINARY_OP_AND){
+                    // if false then short circuit
+                    left->getTempReg()->branch("_False%s", branchTest);
+                } else if(node->getBinaryOp() == BINARY_OP_OR){
+                    // if left is true, the short circuit
+                    left->getTempReg()->branch2("_False%s", branchTest);
+                }
+
+                DebugInfo(node, "gen right");
+                genExprRelatedNode(node->child->rightSibling);
+
+                Register *leftReg = left->getTempReg();
+                Register *rightReg = right->getTempReg();
+                Register *reg = node->getTempReg(RegforceCaller);
+                reg->operand(node->getBinaryOp(), leftReg, rightReg);
+                CodeGenStream("j\tEnd%s", branchTest);
+                if(node->getBinaryOp() == BINARY_OP_AND || node->getBinaryOp() == BINARY_OP_OR){
+                    CodeGenStream("_False%s:", branchTest);
+                    Register *reg = node->getTempReg(RegforceCaller);
+                    reg->load(left->getTempReg());
+                }
+                CodeGenStream("End%s:", branchTest);
+                break;
+            }
         case UNARY_OPERATION:
-            genExprRelatedNode(node->child);
-            break;
+            {
+                genExprRelatedNode(node->child);
+
+                Register *reg = node->getTempReg(RegforceCaller);
+                reg->operand(node->getUnaryOp(), node->child->getTempReg());
+                break;
+            }
         default:
             DebugInfo(node, "Unhandle case in genExprNode, nodeExprKind: %d\n", node->getExprKind());
             break;
     }
-    genOpStmt(node);
     DebugInfo(node, "result reg: %s", node->getTempReg()->name());
 }
 
@@ -357,29 +391,6 @@ void genIfStmt(AST_NODE *node){
     }
 }
 
-void genOpStmt(AST_NODE *node){
-    switch(node->getExprKind()){
-        case BINARY_OPERATION:
-        {
-            AST_NODE *left = node->child;
-            AST_NODE *right = node->child->rightSibling;
-
-            Register *leftReg = left->getTempReg();
-            Register *rightReg = right->getTempReg();
-            Register *reg = node->getTempReg(RegforceCaller);
-            reg->operand(node->getBinaryOp(), leftReg, rightReg);
-            break;
-        }
-        case UNARY_OPERATION:
-        {
-            Register *reg = node->getTempReg(RegforceCaller);
-            reg->operand(node->getUnaryOp(), node->child->getTempReg());
-        }
-        default:
-            break;
-    }
-}
-
 void genConStmt(AST_NODE *node){
     Register *reg = node->getTempReg();
     switch(node->getConType()){
@@ -416,8 +427,10 @@ void genGeneralNode(AST_NODE *node){
             genDeclareNode(node);
             break;
         case IDENTIFIER_NODE:
-            if(node->parent->type() != DECLARATION_NODE)
+            if(node->parent->type() != DECLARATION_NODE){
+                    fprintf(stderr, "gen ID node, paramter, type: %d\n", node->getDataType());
                 node->getTempReg();
+            }
             break;
         case BLOCK_NODE:
             genGeneralNodeWithSibling(node->child);

@@ -74,7 +74,7 @@ void genSyscall(const SystemCallCode &code, Register *value){
         case READ_FLOAT:
             {
                 CodeGenStream("syscall");
-                Register *f0 = regSystem.getReg("f0");
+                Register *f0 = regSystem.getReg("$f0");
                 value->load(f0);
                 break;
             }

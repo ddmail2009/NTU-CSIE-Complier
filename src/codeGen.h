@@ -29,5 +29,4 @@ void codeGen(AST_NODE* prog);
 void genGeneralNodeWithSibling(AST_NODE *node);
 void genGeneralNode(AST_NODE *node);
 void genConStmt(AST_NODE *node);
-void genOpStmt(AST_NODE *node);
 #endif

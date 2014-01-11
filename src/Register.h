@@ -22,6 +22,7 @@ class Register{
         void operand(UNARY_OPERATOR op, const Register *from);
 
         void branch(const char *format, ...) const;
+        void branch2(const char *format, ...) const;
 
         void load(int value);
         void load(double value);
@@ -38,13 +39,13 @@ class Register{
         bool fit(const AST_NODE *node) const;
         bool fit(const Address &addr) const;
 
+        Address *targetAddr;
     private:
         char reg_name[10];
         DATA_TYPE reg_type;
         bool dirty;
 
         const void *target;
-        Address *targetAddr;
         bool targetType;
 };
 
@@ -129,6 +130,15 @@ class RegisterSystem{
         void clear(){
             for(std::vector<Register*>::iterator iter=registers.begin(); iter!=registers.end(); iter++){
                 (*iter)->clear();
+            }
+        }
+
+        void clearRegRecord(){
+            for(int i=0; i<10; i++){
+                callerReg[i]->clear();
+            }
+            for(int i=0; i<30; i++){
+                floatReg[i]->clear();
             }
         }
     private:

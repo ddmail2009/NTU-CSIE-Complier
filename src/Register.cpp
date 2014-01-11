@@ -79,7 +79,6 @@ void Register::operand(BINARY_OPERATOR op, const Register *leftFrom, const doubl
     this->operand(op, leftFrom, tmp);
 }
 void Register::operand(BINARY_OPERATOR op, const Register *left, const Register *right){
-
     if(left->type() == FLOAT_TYPE && right->type() == INT_TYPE){
         Register *tmp = regSystem.getReg(FLOAT_TYPE, RegforceCaller);
         tmp->load(right);
@@ -148,6 +147,22 @@ void Register::branch(const char *format, ...) const{
     CodeGenStream("beqz\t%s, %s", regName, label);
 }
 
+void Register::branch2(const char *format, ...) const{
+    char label[1024];
+    va_list args;
+    va_start(args, format);
+    vsprintf(label, format, args);
+    va_end(args);
+
+    const char *regName = name();
+    if(type() == FLOAT_TYPE){
+        Register *tmp = regSystem.getReg(INT_TYPE, RegforceCaller);
+        tmp->load(this);
+        regName = tmp->name();
+    }
+    CodeGenStream("bne\t%s, $zero, %s", regName, label);
+}
+
 void Register::load(int value){
     this->load((float) value);
 }
@@ -209,6 +224,7 @@ void Register::save(const Address &addr){
 }
 
 void Register::setTarget(const AST_NODE *node){
+    if(targetType == 1) save(*targetAddr);
     targetType = 0;
     target = node;
 }
@@ -348,10 +364,6 @@ void ARSystem::clear(){
         delete iter->second;
     }
     localVarible.clear();
-    for(std::map<SymbolTableEntry*, Address*>::iterator iter=globleVariable.begin(); iter!=globleVariable.end(); iter++){
-        delete iter->second;
-    }
-    globleVariable.clear();
     totalOffset = 0;
     paramOffset = 8;
 }
@@ -417,6 +429,8 @@ Address ARSystem::getAddress(AST_NODE *node){
         else 
             addr = localVarible[entry];
 
+        if(addr == NULL) 
+            fprintf(stderr, "try to get symbol: %s", entry->name);
         assert(addr != NULL);
         return *addr;
     }
@@ -533,11 +547,15 @@ Register *AST_NODE::getTempReg(int option){
     if(!isReset && reg != NULL && reg->fit(this)) return reg;
 
     bool isID = (type() == IDENTIFIER_NODE && getSymbol()->attribute->getKind() == VARIABLE_ATTRIBUTE);
-    if(!isReset && isID && regSystem.getFit(ar.getAddress(this)) != NULL){
+    Address address = ar.getAddress(this);
+    if(!isReset && isID && regSystem.getFit(address) != NULL){
         reg = regSystem.getFit(ar.getAddress(this));
         fprintf(stderr, "\t\t\t\t\e[35mfound register: %s in same symbol: %s\e[m\n", reg->name(), this->getSymbol()->name);
     } else {
-        Register *tmp = regSystem.getReg(getDataType(), isCaller);
+        DATA_TYPE type = getDataType();
+        if(isID) 
+            type = getSymbol()->attribute->getTypeDes()->getDataType();
+        Register *tmp = regSystem.getReg(type, isCaller);
         setRegister(tmp, !isDisableload);
     }
     return reg;
@@ -546,4 +564,11 @@ Register *AST_NODE::getTempReg(int option){
 const char *AST_NODE::getTempName(){
     Register *reg = getTempReg();
     return reg->name();
+}
+
+DATA_TYPE AST_NODE::getDataType() const {
+    if(type() == IDENTIFIER_NODE && getSymbol()->attribute->getKind() == VARIABLE_ATTRIBUTE)
+        return getSymbol()->attribute->getTypeDes()->getDataType();
+
+    return dataType;
 }

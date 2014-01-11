@@ -112,12 +112,12 @@ typedef struct EXPRSemanticValue{
         UNARY_OPERATOR unaryOp;
     } op;
 
-    BINARY_OPERATOR binaryOp() {
+    BINARY_OPERATOR binaryOp() const{
         assert(kind == BINARY_OPERATION);
         return op.binaryOp;
     }
 
-    UNARY_OPERATOR unaryOp() {
+    UNARY_OPERATOR unaryOp() const{
         assert(kind == UNARY_OPERATION);
         return op.unaryOp;
     }
@@ -132,7 +132,7 @@ typedef struct IdentifierSemanticValue{
     struct SymbolTableEntry *symbolTableEntry;
     IDENTIFIER_KIND kind;
 
-    const char* name() {
+    const char* name() const{
         return identifierName;
     }
 } IdentifierSemanticValue;
@@ -202,34 +202,32 @@ class AST_NODE {
             semantic_value.identifierSemanticValue.symbolTableEntry = entry;
         }
 
-        AST_TYPE type() {
+        AST_TYPE type() const {
             return nodeType;
         }
 
-        DATA_TYPE getDataType() {
-            return dataType;
-        }
+        DATA_TYPE getDataType() const;
 
         void setDataType(DATA_TYPE type){
             dataType = type;
         }
 
-        STMT_KIND getStmtType(){
+        STMT_KIND getStmtType() const{
             assert(type() == STMT_NODE);
             return semantic_value.stmtSemanticValue.kind;
         }
 
-        C_type getConType() {
+        C_type getConType() const{
             assert(type() == CONST_VALUE_NODE);
             return semantic_value.const1->type();
         }
 
-        int getConIntValue() {
+        int getConIntValue() const {
             assert(getConType() == INTEGERC);
             return semantic_value.const1->const_u.intval;
         }
 
-        double getConFloatValue() {
+        double getConFloatValue() const{
             assert(getConType() == FLOATC);
             return semantic_value.const1->const_u.fval;
         }
@@ -254,22 +252,22 @@ class AST_NODE {
             return semantic_value.exprSemanticValue.kind;
         }
 
-        BINARY_OPERATOR getBinaryOp() {
+        BINARY_OPERATOR getBinaryOp() const{
             assert(type() == EXPR_NODE);
             return semantic_value.exprSemanticValue.binaryOp();
         }
 
-        UNARY_OPERATOR getUnaryOp() {
+        UNARY_OPERATOR getUnaryOp() const{
             assert(type() == EXPR_NODE);
             return semantic_value.exprSemanticValue.unaryOp();
         }
 
-        const char* getIDName() {
+        const char* getIDName() const{
             assert(type() == IDENTIFIER_NODE);
             return semantic_value.identifierSemanticValue.name();
         }
 
-        SymbolTableEntry *getSymbol(){
+        SymbolTableEntry *getSymbol() const{
             assert(type() == IDENTIFIER_NODE);
             return semantic_value.identifierSemanticValue.symbolTableEntry;
         }

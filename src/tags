@@ -38,6 +38,7 @@ BINARY_OP_NE	header.h	/^    BINARY_OP_NE,$/;"	e	enum:BINARY_OPERATOR
 BINARY_OP_OR	header.h	/^    BINARY_OP_OR$/;"	e	enum:BINARY_OPERATOR
 BINARY_OP_SUB	header.h	/^    BINARY_OP_SUB,$/;"	e	enum:BINARY_OPERATOR
 BLOCK_NODE	header.h	/^    BLOCK_NODE,$/;"	e	enum:AST_TYPE
+BinaryNegate	Register.cpp	/^bool BinaryNegate[] = {$/;"	v
 Binarycommand	Register.cpp	/^const char Binarycommand[][2][10] = {$/;"	v
 CC	Makefile	/^CC = g++ -g -Wall$/;"	m
 CONST	parser.tab.c	/^    CONST = 259,$/;"	e	enum:yytokentype	file:
@@ -78,11 +79,9 @@ EXPRSemanticValue	header.h	/^} EXPRSemanticValue;$/;"	t	typeref:struct:EXPRSeman
 EXPR_KIND	header.h	/^typedef enum EXPR_KIND{$/;"	g
 EXPR_KIND	header.h	/^} EXPR_KIND;$/;"	t	typeref:enum:EXPR_KIND
 EXPR_NODE	header.h	/^    EXPR_NODE,$/;"	e	enum:AST_TYPE
-End_False0	output.s	/^End_False0:$/;"	l
-End_False1	output.s	/^End_False1:$/;"	l
-End_False2	output.s	/^End_False2:$/;"	l
 ErrorMsgKind	semanticAnalysis.c	/^typedef enum ErrorMsgKind$/;"	g	file:
 ErrorMsgKind	semanticAnalysis.c	/^} ErrorMsgKind;$/;"	t	typeref:enum:ErrorMsgKind	file:
+F	output.s	/^F:$/;"	l
 FLEXINT_H	lex.yy.c	29;"	d	file:
 FLEX_BETA	lex.yy.c	13;"	d	file:
 FLEX_SCANNER	lex.yy.c	8;"	d	file:
@@ -244,6 +243,7 @@ SymbolTable	symbolTable.h	/^struct SymbolTable {$/;"	s
 SymbolTableEntry	symbolTable.h	/^    SymbolTableEntry(int level, const char *n = NULL, SymbolAttribute *attr = NULL):$/;"	f	class:SymbolTableEntry
 SymbolTableEntry	symbolTable.h	/^class SymbolTableEntry {$/;"	c
 SystemCallCode	gen-part.h	/^enum SystemCallCode {$/;"	g
+T	output.s	/^T:$/;"	l
 TARGET	Makefile	/^TARGET = parser$/;"	m
 TOO_FEW_ARGUMENTS	semanticAnalysis.c	/^    TOO_FEW_ARGUMENTS,$/;"	e	enum:ErrorMsgKind	file:
 TOO_MANY_ARGUMENTS	semanticAnalysis.c	/^    TOO_MANY_ARGUMENTS,$/;"	e	enum:ErrorMsgKind	file:
@@ -423,41 +423,43 @@ YY_USE_CONST	lex.yy.c	93;"	d	file:
 YY_YY_PARSER_TAB_H_INCLUDED	parser.tab.c	202;"	d	file:
 YY_YY_PARSER_TAB_H_INCLUDED	parser.tab.h	34;"	d
 _CodeGen_H	codeGen.h	2;"	d
-_End__IF_main0	output.s	/^_End__IF_main0:$/;"	l
-_End__IF_main4	output.s	/^_End__IF_main4:$/;"	l
-_End__IF_main6	output.s	/^_End__IF_main6:$/;"	l
-_End__IF_main8	output.s	/^_End__IF_main8:$/;"	l
-_False0	output.s	/^_False0:$/;"	l
-_False1	output.s	/^_False1:$/;"	l
-_False2	output.s	/^_False2:$/;"	l
 _Gen_Part_H	gen-part.h	2;"	d
 _Noreturn	parser.tab.c	358;"	d	file:
 _Noreturn	parser.tab.c	360;"	d	file:
 __HEADER_H__	header.h	2;"	d
-__IfBranch_main1	output.s	/^__IfBranch_main1:$/;"	l
-__IfBranch_main5	output.s	/^__IfBranch_main5:$/;"	l
-__IfBranch_main7	output.s	/^__IfBranch_main7:$/;"	l
-__IfBranch_main9	output.s	/^__IfBranch_main9:$/;"	l
 __Register_H	Register.h	2;"	d
 __STDC_LIMIT_MACROS	lex.yy.c	39;"	d	file:
-__STR_main2	output.s	/^__STR_main2: .asciiz "false"$/;"	l
-__STR_main3	output.s	/^__STR_main3: .asciiz "correct"$/;"	l
+__STR_F1	output.s	/^__STR_F1: .asciiz "false\\n"$/;"	l
+__STR_T0	output.s	/^__STR_T0: .asciiz "true\\n"$/;"	l
+__STR_main2	output.s	/^__STR_main2: .asciiz "test1:\\n"$/;"	l
+__STR_main4	output.s	/^__STR_main4: .asciiz "test2:\\n"$/;"	l
+__STR_main6	output.s	/^__STR_main6: .asciiz "test3:\\n"$/;"	l
+__STR_main8	output.s	/^__STR_main8: .asciiz "test4:\\n"$/;"	l
 __SYMBOL_TABLE_H__	symbolTable.h	2;"	d
+_begin_F	output.s	/^_begin_F:$/;"	l
+_begin_T	output.s	/^_begin_T:$/;"	l
 _begin_main	output.s	/^_begin_main:$/;"	l
+_end_F	output.s	/^_end_F:$/;"	l
+_end_T	output.s	/^_end_T:$/;"	l
 _end_main	output.s	/^_end_main:$/;"	l
-_framesize_main	output.s	/^_framesize_main: .word 40$/;"	l
-add	output.s	/^add	$fp, $sp, $s0$/;"	l
-add	output.s	/^add	$sp, $fp, $s0$/;"	l
-add	output.s	/^add	$sp, $sp, $s1$/;"	l
+_framesize_F	output.s	/^_framesize_F: .word 32$/;"	l
+_framesize_T	output.s	/^_framesize_T: .word 32$/;"	l
+_framesize_main	output.s	/^_framesize_main: .word 32$/;"	l
 addDimension	symbolTable.c	/^void TypeDescriptor::addDimension(int sizeInDimension){$/;"	f	class:TypeDescriptor
 addParameter	symbolTable.h	/^    void addParameter(Parameter *p){$/;"	f	class:FunctionSignature
-addVariable	Register.cpp	/^void ARSystem::addVariable(SymbolTableEntry *entry){$/;"	f	class:ARSystem
+addVariable	Register.cpp	/^void ARSystem::addVariable(SymbolTableEntry *entry, bool isParam){$/;"	f	class:ARSystem
 addVariable	Register.cpp	/^void ARSystem::addVariable(const char *str){$/;"	f	class:ARSystem
 add_op	parser.y	/^add_op		: OP_PLUS$/;"	l
+addi	output.s	/^addi	$fp, $sp, -4$/;"	l
+addi	output.s	/^addi	$sp, $fp, 4$/;"	l
+addi	output.s	/^addi	$sp, $sp, -8$/;"	l
+addi	output.s	/^addi	$sp, $sp, 0$/;"	l
 addrIsLabel	Register.h	/^        bool addrIsLabel;$/;"	m	class:Address
 addrName	Register.h	/^        char addrName[100];$/;"	m	class:Address
 address	symbolTable.h	/^    const Address *address;$/;"	m	class:SymbolTableEntry
 alloca	parser.tab.c	405;"	d	file:
+and	output.s	/^and	$t2, $s4, $s5$/;"	l
+and	output.s	/^and	$t3, $s7, $s1$/;"	l
 ar	codeGen.c	/^ARSystem ar;$/;"	v
 arrayProperties	symbolTable.h	/^      ArrayProperties arrayProperties;\/\/kind: ARRAY_TYPE_DESCRIPTOR$/;"	m	union:TypeDescriptor::__anon5
 assign_expr	parser.y	/^assign_expr     : ID OP_ASSIGN relop_expr$/;"	l
@@ -465,13 +467,6 @@ assign_expr_list	parser.y	/^assign_expr_list : nonempty_assign_expr_list$/;"	l
 attr	symbolTable.h	/^    } attr;$/;"	m	class:SymbolAttribute	typeref:union:SymbolAttribute::__anon6
 attribute	symbolTable.h	/^    SymbolAttribute* attribute;$/;"	m	class:SymbolTableEntry
 attributeKind	symbolTable.h	/^    SymbolAttributeKind attributeKind;$/;"	m	class:SymbolAttribute
-bc1f	output.s	/^bc1f _False0$/;"	l
-bc1f	output.s	/^bc1f _False1$/;"	l
-bc1f	output.s	/^bc1f _False2$/;"	l
-beqz	output.s	/^beqz	$t0, __IfBranch_main1$/;"	l
-beqz	output.s	/^beqz	$t1, __IfBranch_main5$/;"	l
-beqz	output.s	/^beqz	$t2, __IfBranch_main7$/;"	l
-beqz	output.s	/^beqz	$t3, __IfBranch_main9$/;"	l
 binaryOp	header.h	/^        BINARY_OPERATOR binaryOp;$/;"	m	union:EXPRSemanticValue::__anon2
 binaryOp	header.h	/^    BINARY_OPERATOR binaryOp() {$/;"	f	struct:EXPRSemanticValue
 block	parser.y	/^block           : decl_list stmt_list$/;"	l
@@ -491,6 +486,9 @@ checkReturnStmt	semanticAnalysis.c	/^void checkReturnStmt(AST_NODE* returnNode)$
 checkWhileStmt	semanticAnalysis.c	/^void checkWhileStmt(AST_NODE* whileNode)$/;"	f
 checkWriteFunction	semanticAnalysis.c	/^void checkWriteFunction(AST_NODE* functionCallNode)$/;"	f
 child	header.h	/^        struct AST_NODE *child;$/;"	m	class:AST_NODE	typeref:struct:AST_NODE::AST_NODE
+clear	Register.cpp	/^void ARSystem::clear(){$/;"	f	class:ARSystem
+clear	Register.cpp	/^void Register::clear(){$/;"	f	class:Register
+clear	Register.h	/^        void clear(){$/;"	f	class:RegisterSystem
 closeScope	symbolTable.c	/^void closeScope() {$/;"	f
 codeGen	codeGen.c	/^void codeGen(AST_NODE* prog){$/;"	f
 const1	header.h	/^            CON_Type *const1;$/;"	m	union:AST_NODE::__anon4
@@ -544,7 +542,7 @@ fnb	func.c	/^int fnb() {$/;"	f
 fnc	func.c	/^float fnc() {$/;"	f
 fnd	func.c	/^void fnd() {$/;"	f
 fp	Register.h	/^        Register *sp, *fp;$/;"	m	class:ARSystem
-funcName	Register.h	/^        char funcName[256], tagName[256];$/;"	m	class:ARSystem
+funcName	Register.h	/^        char funcName[256];$/;"	m	class:ARSystem
 functionSignature	symbolTable.h	/^      FunctionSignature* functionSignature;$/;"	m	union:SymbolAttribute::__anon6
 function_decl	parser.y	/^function_decl	: function_head MK_LPAREN opt_param_list MK_RPAREN MK_LBRACE block MK_RBRACE$/;"	l
 function_head	parser.y	/^function_head   : type ID$/;"	l
@@ -566,7 +564,7 @@ genReadFunction	codeGen.c	/^void genReadFunction(AST_NODE *node){$/;"	f
 genReturnStmt	codeGen.c	/^void genReturnStmt(AST_NODE *node){$/;"	f
 genStmtNode	codeGen.c	/^void genStmtNode(AST_NODE *node){$/;"	f
 genSyscall	gen-part.cpp	/^void genSyscall(const SystemCallCode &code, Register *value){$/;"	f
-genVariable	codeGen.c	/^void genVariable(AST_NODE *IDNode){$/;"	f
+genVariable	codeGen.c	/^void genVariable(AST_NODE *IDNode, bool isParam = false){$/;"	f
 genWhileStmt	codeGen.c	/^void genWhileStmt(AST_NODE* node){$/;"	f
 genWriteFunction	codeGen.c	/^void genWriteFunction(AST_NODE *node){$/;"	f
 getAddress	Register.cpp	/^Address ARSystem::getAddress(AST_NODE *node){$/;"	f	class:ARSystem
@@ -598,7 +596,7 @@ getParamName	symbolTable.h	/^  const char *getParamName(){$/;"	f	struct:Paramete
 getParameterCount	symbolTable.h	/^    int getParameterCount() const{$/;"	f	class:FunctionSignature
 getParams	symbolTable.h	/^    Parameter * getParams() const{$/;"	f	class:FunctionSignature
 getReg	Register.cpp	/^Register *RegisterSystem::getReg(DATA_TYPE type, bool isCaller){$/;"	f	class:RegisterSystem
-getReg	Register.cpp	/^Register *RegisterSystem::getReg(const char *str){$/;"	f	class:RegisterSystem
+getReg	Register.cpp	/^Register *RegisterSystem::getReg(const char *format, ...){$/;"	f	class:RegisterSystem
 getReturnType	symbolTable.h	/^    DATA_TYPE getReturnType() const {$/;"	f	class:FunctionSignature
 getStartTag	Register.cpp	/^void ARSystem::getStartTag(char *outStr) const{$/;"	f	class:ARSystem
 getStmtType	header.h	/^        STMT_KIND getStmtType(){$/;"	f	class:AST_NODE
@@ -609,10 +607,10 @@ getTempName	Register.cpp	/^const char *AST_NODE::getTempName(){$/;"	f	class:AST_
 getTempReg	Register.cpp	/^Register *AST_NODE::getTempReg(int option){$/;"	f	class:AST_NODE
 getTypeDes	symbolTable.h	/^    TypeDescriptor *getTypeDes(){$/;"	f	class:SymbolAttribute
 getUnaryOp	header.h	/^        UNARY_OPERATOR getUnaryOp() {$/;"	f	class:AST_NODE
-globalVariable	Register.h	/^        std::map<SymbolTableEntry*, Address*> globalVariable;$/;"	m	class:ARSystem
 global_decl	parser.y	/^global_decl	: decl_list function_decl$/;"	l
 global_decl_list	parser.y	/^global_decl_list: global_decl_list global_decl$/;"	l
 globleInitRoutine	Register.cpp	/^void ARSystem::globleInitRoutine(const char *start, const char *end){$/;"	f	class:ARSystem
+globleVariable	Register.h	/^        std::map<SymbolTableEntry*, Address*> globleVariable;$/;"	m	class:ARSystem
 hashTable	symbolTable.h	/^  SymbolTableEntry* hashTable[HASH_TABLE_SIZE];$/;"	m	struct:SymbolTable
 iValue	header.h	/^        int iValue;$/;"	m	union:EXPRSemanticValue::__anon1
 id_list	parser.y	/^id_list		: ID$/;"	l
@@ -630,38 +628,29 @@ isConstEval	header.h	/^    int isConstEval;$/;"	m	struct:EXPRSemanticValue
 isDirty	Register.cpp	/^bool Register::isDirty(){$/;"	f	class:Register
 isLabel	Register.h	/^        bool isLabel() const{$/;"	f	class:Address
 isPtrSame	test.c	/^void isPtrSame(name *ptr, name *aptr){$/;"	f
-j	output.s	/^j	End_False0$/;"	l
-j	output.s	/^j	End_False1$/;"	l
-j	output.s	/^j	End_False2$/;"	l
-j	output.s	/^j	_End__IF_main0$/;"	l
-j	output.s	/^j	_End__IF_main4$/;"	l
-j	output.s	/^j	_End__IF_main6$/;"	l
-j	output.s	/^j	_End__IF_main8$/;"	l
+j	output.s	/^j	_end_F$/;"	l
+j	output.s	/^j	_end_T$/;"	l
+j	output.s	/^j	_end_main$/;"	l
+jal	output.s	/^jal	F$/;"	l
+jal	output.s	/^jal	T$/;"	l
+jr	output.s	/^jr	$ra$/;"	l
 kind	header.h	/^    DECL_KIND kind;$/;"	m	struct:DECLSemanticValue
 kind	header.h	/^    EXPR_KIND kind;$/;"	m	struct:EXPRSemanticValue
 kind	header.h	/^    IDENTIFIER_KIND kind;$/;"	m	struct:IdentifierSemanticValue
 kind	header.h	/^    STMT_KIND kind;$/;"	m	struct:STMTSemanticValue
 kind	symbolTable.h	/^    TypeDescriptorKind kind;$/;"	m	class:TypeDescriptor
-la	output.s	/^la	$s0, __STR_main3$/;"	l
-la	output.s	/^la	$s4, __STR_main2$/;"	l
-la	output.s	/^la	$s5, __STR_main2$/;"	l
-la	output.s	/^la	$s5, __STR_main3$/;"	l
-la	output.s	/^la	$s6, __STR_main2$/;"	l
-la	output.s	/^la	$s6, __STR_main3$/;"	l
-la	output.s	/^la	$s7, __STR_main3$/;"	l
+la	output.s	/^la	$s0, __STR_F1$/;"	l
+la	output.s	/^la	$s0, __STR_T0$/;"	l
+la	output.s	/^la	$s0, __STR_main2$/;"	l
+la	output.s	/^la	$s0, __STR_main8$/;"	l
+la	output.s	/^la	$s3, __STR_main4$/;"	l
+la	output.s	/^la	$s6, __STR_main6$/;"	l
 leftmostSibling	header.h	/^        struct AST_NODE *leftmostSibling;$/;"	m	class:AST_NODE	typeref:struct:AST_NODE::AST_NODE
 lexeme	parser.tab.c	/^	char *lexeme;$/;"	m	union:YYSTYPE	file:
 lexeme	parser.tab.h	/^	char *lexeme;$/;"	m	union:YYSTYPE
-li	output.s	/^li	$s0, -4$/;"	l
-li	output.s	/^li	$s0, 4$/;"	l
-li	output.s	/^li	$s1, -8$/;"	l
-li	output.s	/^li	$s3, 3$/;"	l
-li	output.s	/^li	$t1, 0$/;"	l
-li	output.s	/^li	$t1, 1$/;"	l
-li	output.s	/^li	$t2, 0$/;"	l
-li	output.s	/^li	$t2, 1$/;"	l
-li	output.s	/^li	$t3, 0$/;"	l
-li	output.s	/^li	$t3, 1$/;"	l
+li	output.s	/^li	$s1, 0$/;"	l
+li	output.s	/^li	$s1, 1$/;"	l
+li	output.s	/^li	$s3, 0$/;"	l
 li	output.s	/^li	$v0, 10$/;"	l
 li	output.s	/^li	$v0, 4$/;"	l
 linenumber	header.h	/^        int linenumber;$/;"	m	class:AST_NODE
@@ -674,15 +663,17 @@ load	Register.cpp	/^void Register::load(int value){$/;"	f	class:Register
 localVarible	Register.h	/^        std::map<SymbolTableEntry*, Address*> localVarible;$/;"	m	class:ARSystem
 lw	output.s	/^lw	$fp, 0($fp)$/;"	l
 lw	output.s	/^lw	$ra, 4($fp)$/;"	l
-lw	output.s	/^lw	$s0, 4($sp)$/;"	l
-lw	output.s	/^lw	$s1, 8($sp)$/;"	l
-lw	output.s	/^lw	$s2, 12($sp)$/;"	l
-lw	output.s	/^lw	$s2, _framesize_main$/;"	l
-lw	output.s	/^lw	$s3, 16($sp)$/;"	l
-lw	output.s	/^lw	$s4, 20($sp)$/;"	l
-lw	output.s	/^lw	$s5, 24($sp)$/;"	l
-lw	output.s	/^lw	$s6, 28($sp)$/;"	l
-lw	output.s	/^lw	$s7, 32($sp)$/;"	l
+lw	output.s	/^lw	$s0, -4($fp)$/;"	l
+lw	output.s	/^lw	$s1, -8($fp)$/;"	l
+lw	output.s	/^lw	$s2, -12($fp)$/;"	l
+lw	output.s	/^lw	$s3, -16($fp)$/;"	l
+lw	output.s	/^lw	$s4, -20($fp)$/;"	l
+lw	output.s	/^lw	$s5, -24($fp)$/;"	l
+lw	output.s	/^lw	$s6, -28($fp)$/;"	l
+lw	output.s	/^lw	$s7, -32($fp)$/;"	l
+lw	output.s	/^lw	$t0, _framesize_F$/;"	l
+lw	output.s	/^lw	$t0, _framesize_T$/;"	l
+lw	output.s	/^lw	$t0, _framesize_main$/;"	l
 main	assign.c	/^int main() {$/;"	f
 main	control.c	/^int main() {$/;"	f
 main	expr.c	/^int main() {$/;"	f
@@ -699,12 +690,17 @@ makeIDNode	parser.tab.c	/^static inline AST_NODE* makeIDNode(char *lexeme, IDENT
 makeSibling	parser.tab.c	/^static inline AST_NODE* makeSibling(AST_NODE *a, AST_NODE *b)$/;"	f	file:
 makeStmtNode	parser.tab.c	/^static inline AST_NODE* makeStmtNode(STMT_KIND stmtKind)$/;"	f	file:
 mcexpr	parser.y	/^mcexpr		: mcexpr OP_TIMES cfactor$/;"	l
-mfc1	output.s	/^mfc1	$t0, $f5$/;"	l
 move	output.s	/^move	$a0, $s0$/;"	l
-move	output.s	/^move	$a0, $s4$/;"	l
-move	output.s	/^move	$a0, $s5$/;"	l
+move	output.s	/^move	$a0, $s3$/;"	l
 move	output.s	/^move	$a0, $s6$/;"	l
-move	output.s	/^move	$a0, $s7$/;"	l
+move	output.s	/^move	$s1, $v0$/;"	l
+move	output.s	/^move	$s2, $v0$/;"	l
+move	output.s	/^move	$s4, $v0$/;"	l
+move	output.s	/^move	$s5, $v0$/;"	l
+move	output.s	/^move	$s6, $v0$/;"	l
+move	output.s	/^move	$s7, $v0$/;"	l
+move	output.s	/^move	$v0, $s1$/;"	l
+move	output.s	/^move	$v0, $s3$/;"	l
 mul_op	parser.y	/^mul_op		: OP_TIMES$/;"	l
 n	test.c	/^    char n[100];$/;"	m	struct:name	file:
 name	Register.cpp	/^const char *Register::name() const{$/;"	f	class:Register
@@ -731,8 +727,17 @@ operand	Register.cpp	/^void Register::operand(BINARY_OPERATOR op, const Register
 operand	Register.cpp	/^void Register::operand(UNARY_OPERATOR op, const Register *from){$/;"	f	class:Register
 operator +	Register.cpp	/^Address Address::operator +(int i) const{$/;"	f	class:Address
 operator -	Register.cpp	/^Address Address::operator -(int i) const{$/;"	f	class:Address
+operator ==	Register.h	/^        bool operator ==(const Address &addr) const{$/;"	f	class:Address
+operator ==	Register.h	/^        bool operator ==(const Address *addr) const{$/;"	f	class:Address
 opt_param_list	parser.y	/^opt_param_list  : param_list$/;"	l
+or	output.s	/^or	$t1, $s1, $s2$/;"	l
+or	output.s	/^or	$t4, $s0, $s6$/;"	l
+or	output.s	/^or	$t5, $t3, $t4$/;"	l
+or	output.s	/^or	$t6, $s7, $s5$/;"	l
+or	output.s	/^or	$t7, $s4, $s6$/;"	l
+or	output.s	/^or	$t8, $t6, $t7$/;"	l
 param	parser.y	/^param		: type ID$/;"	l
+paramOffset	Register.h	/^        int totalOffset, paramOffset;$/;"	m	class:ARSystem
 param_list	parser.y	/^param_list	: param_list MK_COMMA  param$/;"	l
 parameterList	symbolTable.h	/^    Parameter *parameterList;$/;"	m	class:FunctionSignature
 parameterName	symbolTable.h	/^  char* parameterName;$/;"	m	struct:Parameter
@@ -775,14 +780,12 @@ relop_factor	parser.y	/^relop_factor	: expr$/;"	l
 relop_term	parser.y	/^relop_term	: relop_factor$/;"	l
 removeFromHashTrain	symbolTable.c	/^void removeFromHashTrain(int hashIndex, SymbolTableEntry* entry) {$/;"	f
 removeSymbol	symbolTable.c	/^void removeSymbol(char* symbolName) {$/;"	f
-restoreCalleeReg	Register.h	/^        void restoreCalleeReg(){$/;"	f	class:RegisterSystem
 retrieveSymbol	symbolTable.c	/^SymbolTableEntry* retrieveSymbol(char* symbolName) {$/;"	f
 returnType	symbolTable.h	/^    DATA_TYPE returnType;$/;"	m	class:FunctionSignature
 rightSibling	header.h	/^        struct AST_NODE *rightSibling;$/;"	m	class:AST_NODE	typeref:struct:AST_NODE::AST_NODE
 sameNameInOuterLevel	symbolTable.h	/^    struct SymbolTableEntry* sameNameInOuterLevel;$/;"	m	class:SymbolTableEntry	typeref:struct:SymbolTableEntry::SymbolTableEntry
 save	Register.cpp	/^void Register::save(){$/;"	f	class:Register
 save	Register.cpp	/^void Register::save(const Address &addr){$/;"	f	class:Register
-saveCalleeReg	Register.h	/^        void saveCalleeReg(){$/;"	f	class:RegisterSystem
 sc	header.h	/^        char    *sc; $/;"	m	union:CON_Type::__anon3
 scopeDisplay	symbolTable.h	/^  SymbolTableEntry** scopeDisplay;$/;"	m	struct:SymbolTable
 scopeDisplayElementCount	symbolTable.h	/^  int scopeDisplayElementCount;$/;"	m	struct:SymbolTable
@@ -793,7 +796,7 @@ setName	Register.cpp	/^void Address::setName(){$/;"	f	class:Address
 setRegister	Register.cpp	/^void AST_NODE::setRegister(Register *tmp, bool autoload){$/;"	f	class:AST_NODE
 setSymbolTableEntry	header.h	/^        void setSymbolTableEntry(SymbolTableEntry *entry){$/;"	f	class:AST_NODE
 setTarget	Register.cpp	/^void Register::setTarget(const AST_NODE *node){$/;"	f	class:Register
-setTarget	Register.cpp	/^void Register::setTarget(const Address &addr){$/;"	f	class:Register
+setTarget	Register.cpp	/^void Register::setTarget(const Address addr){$/;"	f	class:Register
 short	parser.tab.c	283;"	d	file:
 size	symbolTable.h	/^    int size() const {$/;"	f	class:TypeDescriptor
 sizeInEachDimension	symbolTable.h	/^    int sizeInEachDimension[MAX_ARRAY_DIMENSION];$/;"	m	class:ArrayProperties
@@ -801,31 +804,29 @@ sp	Register.h	/^        Register *sp, *fp;$/;"	m	class:ARSystem
 stmt	parser.y	/^stmt		: MK_LBRACE block MK_RBRACE$/;"	l
 stmtSemanticValue	header.h	/^            STMTSemanticValue stmtSemanticValue;$/;"	m	union:AST_NODE::__anon4
 stmt_list	parser.y	/^stmt_list	: stmt_list stmt$/;"	l
-strConst	Register.h	/^        std::map<const char*, const char*> strConst, tmpVariable;$/;"	m	class:ARSystem
+strConst	Register.h	/^        std::map<const char*, const char*> strConst;$/;"	m	class:ARSystem
 strConst	codeGen.c	/^std::vector<const char*> strConst;$/;"	m	class:std	file:
-sub	output.s	/^sub	$sp, $sp, $s2$/;"	l
+sub	output.s	/^sub	$sp, $sp, $t0$/;"	l
 sw	output.s	/^sw	$fp, -4($sp)$/;"	l
 sw	output.s	/^sw	$ra, 0($sp)$/;"	l
-sw	output.s	/^sw	$s0, 4($sp)$/;"	l
-sw	output.s	/^sw	$s1, 8($sp)$/;"	l
-sw	output.s	/^sw	$s2, 12($sp)$/;"	l
-sw	output.s	/^sw	$s3, -36($fp)$/;"	l
-sw	output.s	/^sw	$s3, 16($sp)$/;"	l
-sw	output.s	/^sw	$s4, 20($sp)$/;"	l
-sw	output.s	/^sw	$s5, 24($sp)$/;"	l
-sw	output.s	/^sw	$s6, 28($sp)$/;"	l
-sw	output.s	/^sw	$s7, 32($sp)$/;"	l
+sw	output.s	/^sw	$s0, -4($fp)$/;"	l
+sw	output.s	/^sw	$s1, -8($fp)$/;"	l
+sw	output.s	/^sw	$s2, -12($fp)$/;"	l
+sw	output.s	/^sw	$s3, -16($fp)$/;"	l
+sw	output.s	/^sw	$s4, -20($fp)$/;"	l
+sw	output.s	/^sw	$s5, -24($fp)$/;"	l
+sw	output.s	/^sw	$s6, -28($fp)$/;"	l
+sw	output.s	/^sw	$s7, -32($fp)$/;"	l
 symbolTable	symbolTable.c	/^SymbolTable symbolTable;$/;"	v
 symbolTableEnd	symbolTable.c	/^void symbolTableEnd() {$/;"	f
 symbolTableEntry	header.h	/^    struct SymbolTableEntry *symbolTableEntry;$/;"	m	struct:IdentifierSemanticValue	typeref:struct:IdentifierSemanticValue::SymbolTableEntry
 syscall	output.s	/^syscall$/;"	l
-tagName	Register.h	/^        char funcName[256], tagName[256];$/;"	m	class:ARSystem
 target	Register.h	/^        const void *target;$/;"	m	class:Register
+targetAddr	Register.h	/^        Address *targetAddr;$/;"	m	class:Register
 targetType	Register.h	/^        bool targetType;$/;"	m	class:Register
 term	parser.y	/^term		: term mul_op factor$/;"	l
 test	parser.y	/^test		: assign_expr$/;"	l
-tmpVariable	Register.h	/^        std::map<const char*, const char*> strConst, tmpVariable;$/;"	m	class:ARSystem
-totalOffset	Register.h	/^        int totalOffset;$/;"	m	class:ARSystem
+totalOffset	Register.h	/^        int totalOffset, paramOffset;$/;"	m	class:ARSystem
 type	Register.cpp	/^const DATA_TYPE Register::type() const{$/;"	f	class:Register
 type	header.h	/^        AST_TYPE type() {$/;"	f	class:AST_NODE
 type	header.h	/^    C_type type() {$/;"	f	struct:CON_Type

@@ -1,11 +1,18 @@
+.data
+_delta:	.float 0.0
 .text
-is_prime:
+__InlineSubRoutine_Start_0:
+li.s	$f0, 1.000000
+s.s	$f0, _delta
+j __InlineSubRoutine_End_1
+.text
+floor:
 sw	$ra, 0($sp)
 sw	$fp, -4($sp)
 addi	$fp, $sp, -4
 addi	$sp, $sp, -8
-lw	$s0, _framesize_is_prime
-sub	$sp, $sp, $s0
+lw	$t0, _framesize_floor
+sub	$sp, $sp, $t0
 sw	$s0, -4($fp)
 sw	$s1, -8($fp)
 sw	$s2, -12($fp)
@@ -14,55 +21,15 @@ sw	$s4, -20($fp)
 sw	$s5, -24($fp)
 sw	$s6, -28($fp)
 sw	$s7, -32($fp)
-_begin_is_prime:
-lw	$s1, 8($fp)
-li	$s2, 2
-seq	$t0, $s1, $s2
-li	$s3, 1
-move	$v0, $s3
-j	_end_is_prime
-li	$s4, 2
-div	$t1, $s1, $s4
-li	$s5, 2
-mul	$t2, $t1, $s5
-sub	$t3, $s1, $t2
-li	$s6, 0
-seq	$t4, $t3, $s6
-li	$s7, 0
-move	$v0, $s7
-j	_end_is_prime
-li	$s7, 2
-div	$t5, $s1, $s7
-sw	$s1, 8($fp)
-move	$s1, $t5
-li	$s7, 3
-move	$s2, $s7
-sw	$s1, -40($fp)
-__FOR_is_prime2:
-lw	$s1, -40($fp)
-sle	$t6, $s2, $s1
-beqz	$t6, _End__FOR_is_prime2
-lw	$s7, 8($fp)
-div	$t7, $s7, $s2
-mul	$t8, $t7, $s2
-sub	$t9, $s7, $t8
-sw	$s1, -40($fp)
-li	$s1, 0
-seq	$t4, $t9, $s1
-li	$s6, 0
-move	$v0, $s6
-j	_end_is_prime
-li	$s3, 2
-add	$t2, $s2, $s3
-move	$s2, $t2
-j	__FOR_is_prime2
-_End__FOR_is_prime2:
-li	$s4, 1
-move	$v0, $s4
-j	_end_is_prime
-sw	$s2, -36($fp)
+_begin_floor:
+l.s	$f1, 8($fp)
+mov.s	$f2, $f1
+cvt.w.s	$f2, $f2
+mfc1	$s0, $f2
+move	$v0, $s0
+j	_end_floor
 # epilogue sequence
-_end_is_prime:
+_end_floor:
 lw	$s0, -4($fp)
 lw	$s1, -8($fp)
 lw	$s2, -12($fp)
@@ -76,15 +43,80 @@ addi	$sp, $fp, 4
 lw	$fp, 0($fp)
 jr	$ra
 .data
-_framesize_is_prime: .word 40
+_framesize_floor: .word 36
+.text
+ceil:
+sw	$ra, 0($sp)
+sw	$fp, -4($sp)
+addi	$fp, $sp, -4
+addi	$sp, $sp, -8
+lw	$t0, _framesize_ceil
+sub	$sp, $sp, $t0
+sw	$s0, -4($fp)
+sw	$s1, -8($fp)
+sw	$s2, -12($fp)
+sw	$s3, -16($fp)
+sw	$s4, -20($fp)
+sw	$s5, -24($fp)
+sw	$s6, -28($fp)
+sw	$s7, -32($fp)
+_begin_ceil:
+l.s	$f0, 8($fp)
+li	$s0, 0
+mtc1	$s0, $f1
+cvt.s.w	$f1, $f1
+c.lt.s	$f0, $f1
+bc1f _False0
+li	$t1, 0
+j	End_False0
+_False0:
+li	$t1, 1
+End_False0:
+j	End_LogicalShort_ceil4
+End_LogicalShort_ceil4:
+beqz	$t1, __IfBranch_ceil3
+l.s	$f2, _delta
+add.s	$f3, $f0, $f2
+j	End_LogicalShort_ceil5
+End_LogicalShort_ceil5:
+mov.s	$f4, $f3
+cvt.w.s	$f4, $f4
+mfc1	$s1, $f4
+j	_End__IF_ceil2
+__IfBranch_ceil3:
+sub.s	$f4, $f0, $f2
+j	End_LogicalShort_ceil6
+End_LogicalShort_ceil6:
+mov.s	$f5, $f4
+cvt.w.s	$f5, $f5
+mfc1	$s1, $f5
+_End__IF_ceil2:
+move	$v0, $s1
+j	_end_ceil
+# epilogue sequence
+_end_ceil:
+lw	$s0, -4($fp)
+lw	$s1, -8($fp)
+lw	$s2, -12($fp)
+lw	$s3, -16($fp)
+lw	$s4, -20($fp)
+lw	$s5, -24($fp)
+lw	$s6, -28($fp)
+lw	$s7, -32($fp)
+lw	$ra, 4($fp)
+addi	$sp, $fp, 4
+lw	$fp, 0($fp)
+jr	$ra
+.data
+_framesize_ceil: .word 40
 .text
 main:
 sw	$ra, 0($sp)
 sw	$fp, -4($sp)
 addi	$fp, $sp, -4
 addi	$sp, $sp, -8
-lw	$s0, _framesize_main
-sub	$sp, $sp, $s0
+lw	$t0, _framesize_main
+sub	$sp, $sp, $t0
 sw	$s0, -4($fp)
 sw	$s1, -8($fp)
 sw	$s2, -12($fp)
@@ -94,51 +126,86 @@ sw	$s5, -24($fp)
 sw	$s6, -28($fp)
 sw	$s7, -32($fp)
 _begin_main:
+j __InlineSubRoutine_Start_0
+__InlineSubRoutine_End_1:
 .data
-__STR_main4: .asciiz "enter a range, for example, 5<ENTER> 23<ENTER>:"
+__STR_main7: .asciiz "Enter number :"
 .text
-la	$s1, __STR_main4
+la	$s0, __STR_main7
 li	$v0, 4
+move	$a0, $s0
+syscall
+li	$v0, 6
+syscall
+mov.s	$f0, $f0
+mov.s	$f1, $f0
+s.s	$f1, -36($fp)
+addi	$sp, $sp, -4
+l.s	$f2, -36($fp)
+s.s	$f2, 4($sp)
+jal	ceil
+addi	$sp, $sp, 4
+move	$s1, $v0
+li	$v0, 1
 move	$a0, $s1
 syscall
-li	$v0, 5
-syscall
-move	$s2, $v0
-move	$s3, $s2
-li	$v0, 5
-syscall
-move	$s4, $v0
-move	$s5, $s4
-move	$s6, $s3
-__FOR_main5:
-slt	$t0, $s6, $s5
-beqz	$t0, _End__FOR_main5
-addi	$sp, $sp, -4
-lw	$s7, -36($fp)
-sw	$s7, 4($sp)
-jal	is_prime
-addi	$sp, $sp, 4
-sw	$s7, -36($fp)
-move	$s7, $v0
-lw	$s2, -36($fp)
-li	$v0, 1
+.data
+__STR_main8: .asciiz "\n"
+.text
+la	$s2, __STR_main8
+li	$v0, 4
 move	$a0, $s2
 syscall
-sw	$s5, -44($fp)
-.data
-__STR_main7: .asciiz "\n"
-.text
-la	$s5, __STR_main7
-li	$v0, 4
-move	$a0, $s5
+l.s	$f0, -36($fp)
+s.s	$f0, -36($fp)
+addi	$sp, $sp, -4
+l.s	$f1, -36($fp)
+s.s	$f1, 4($sp)
+jal	floor
+addi	$sp, $sp, 4
+move	$s3, $v0
+li	$v0, 1
+move	$a0, $s3
 syscall
-li	$s1, 1
-add	$t1, $s2, $s1
-move	$s2, $t1
-j	__FOR_main5
-_End__FOR_main5:
-li	$s4, 0
-move	$v0, $s4
+la	$s4, __STR_main8
+li	$v0, 4
+move	$a0, $s4
+syscall
+l.s	$f0, -36($fp)
+s.s	$f0, -36($fp)
+addi	$sp, $sp, -4
+l.s	$f1, -36($fp)
+s.s	$f1, 4($sp)
+jal	ceil
+addi	$sp, $sp, 4
+move	$s5, $v0
+l.s	$f0, -36($fp)
+s.s	$f0, -36($fp)
+addi	$sp, $sp, -4
+l.s	$f1, -36($fp)
+s.s	$f1, 4($sp)
+jal	floor
+addi	$sp, $sp, 4
+move	$s6, $v0
+add	$t0, $s5, $s6
+j	End_LogicalShort_main9
+End_LogicalShort_main9:
+li.s	$f0, 2.000000
+mtc1	$t0, $f1
+cvt.s.w	$f1, $f1
+div.s	$f1, $f1, $f0
+j	End_LogicalShort_main10
+End_LogicalShort_main10:
+mov.s	$f2, $f1
+li	$v0, 2
+mov.s	$f12, $f2
+syscall
+la	$s7, __STR_main8
+li	$v0, 4
+move	$a0, $s7
+syscall
+li	$s5, 0
+move	$v0, $s5
 j	_end_main
 # epilogue sequence
 _end_main:
@@ -156,4 +223,4 @@ lw	$fp, 0($fp)
 li	$v0, 10
 syscall
 .data
-_framesize_main: .word 44
+_framesize_main: .word 40
