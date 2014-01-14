@@ -2,3 +2,10 @@
 *.o
 *.docx
 spim/*
+src/lex.yy.c
+src/parser
+src/parser.output
+src/parser.tab.c
+src/parser.tab.h
+src/test*
+src/output.s

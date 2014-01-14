@@ -1,53 +1,12 @@
 #ifndef __Register_H
 #define __Register_H
 
+#include <cstdlib>
 #include <vector>
 #include <map>
 #include "header.h"
 // forward declaration
-class Address;
-
-class Register{
-    public:
-        Register(const char *name, DATA_TYPE type = INT_TYPE);
-        void clear();
-
-        const char *name() const;
-        const DATA_TYPE type() const;
-        bool isDirty();
-
-        void operand(BINARY_OPERATOR op, const Register *left, const int value);
-        void operand(BINARY_OPERATOR op, const Register *left, const double value);
-        void operand(BINARY_OPERATOR op, const Register *left, const Register *right);
-        void operand(UNARY_OPERATOR op, const Register *from);
-
-        void branch(const char *format, ...) const;
-        void branch2(const char *format, ...) const;
-
-        void load(int value);
-        void load(double value);
-        void load(const char *label);
-        void load(const Register *from);
-        void load(const Address &addr, bool loadWord = true);
-
-        // save to the target, if it is a ast_node, it's a temporary value.
-        void save();
-        void save(const Address &addr);
-
-        void setTarget(const AST_NODE *node);
-        void setTarget(const Address addr);
-        bool fit(const AST_NODE *node) const;
-        bool fit(const Address &addr) const;
-
-        Address *targetAddr;
-    private:
-        char reg_name[10];
-        DATA_TYPE reg_type;
-        bool dirty;
-
-        const void *target;
-        bool targetType;
-};
+class Register;
 
 // description variable address in memory, won't generate any code
 class Address{
@@ -82,6 +41,56 @@ class Address{
         int offset;
         bool addrIsLabel;
 };
+
+class Register{
+    public:
+        Register(const char *n, DATA_TYPE t = INT_TYPE):
+            targetAddr(NULL),
+            dirty(false),
+            reg_type(t),
+            target(NULL),
+            targetType(0) {
+                strncpy(reg_name, n, 10);
+                targetAddr = new Address("");
+        }
+        void clear();
+
+        const char *name() const;
+        const DATA_TYPE type() const;
+        bool isDirty();
+
+        void operand(BINARY_OPERATOR op, const Register *left, const int value);
+        void operand(BINARY_OPERATOR op, const Register *left, const double value);
+        void operand(BINARY_OPERATOR op, const Register *left, const Register *right);
+        void operand(UNARY_OPERATOR op, const Register *from);
+
+        void branch(const char *format, ...) const;
+        void branch2(const char *format, ...) const;
+
+        void load(int value);
+        void load(double value);
+        void load(const char *label);
+        void load(const Register *from);
+        void load(const Address &addr, bool loadWord = true);
+
+        // save to the target, if it is a ast_node, it's a temporary value.
+        void save();
+        void save(const Address &addr);
+
+        void setTarget(const AST_NODE *node);
+        void setTarget(const Address addr);
+        bool fit(const AST_NODE *node) const;
+        bool fit(const Address &addr) const;
+
+        Address *targetAddr;
+    private:
+        bool dirty;
+        DATA_TYPE reg_type;
+        const void *target;
+        bool targetType;
+        char reg_name[10];
+};
+
 
 // control the offset and gen prologue and epilogue
 class ARSystem{

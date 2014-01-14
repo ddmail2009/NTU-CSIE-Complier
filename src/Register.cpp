@@ -34,15 +34,6 @@ bool BinaryNegate[] = {
     true, false, false, false
 };
 
-Register::Register(const char *name, DATA_TYPE type){
-    strncpy(reg_name, name, 10);
-    this->reg_type = type;
-    this->dirty = false;
-    this->targetAddr = new Address("");
-    this->target = NULL;
-    this->targetType = 0;
-}
-
 void Register::clear(){
     dirty = false;
     target = NULL;
@@ -73,11 +64,13 @@ void Register::operand(BINARY_OPERATOR op, const Register *leftFrom, const int v
         this->operand(op, leftFrom, tmp);
     }
 }
+
 void Register::operand(BINARY_OPERATOR op, const Register *leftFrom, const double value){
     Register *tmp = regSystem.getReg(FLOAT_TYPE, RegforceCaller);
     tmp->load(value);
     this->operand(op, leftFrom, tmp);
 }
+
 void Register::operand(BINARY_OPERATOR op, const Register *left, const Register *right){
     if(left->type() == FLOAT_TYPE && right->type() == INT_TYPE){
         Register *tmp = regSystem.getReg(FLOAT_TYPE, RegforceCaller);
