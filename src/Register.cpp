@@ -1,16 +1,16 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <assert.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cstdarg>
+#include <cassert>
+
 #include "Register.h"
 #include "codeGen.h"
 #include "symbolTable.h"
 #include "gen-part.h"
-#include <time.h>
+#include <ctime>
 
 extern ARSystem ar;
-
 
 extern RegisterSystem regSystem;
 
@@ -236,37 +236,6 @@ bool Register::fit(const Address &addr) const{
     else return false;
 }
 
-//////////////////////////////////
-// Address method 
-//////////////////////////////////
-Address::Address(Register *reg, int offset){
-    this->reg = reg;
-    this->offset = offset;
-    this->setName();
-    addrIsLabel = false;
-}
-Address::Address(const char *format, ...){
-    va_list args;
-    va_start(args, format);
-    vsprintf(this->addrName, format, args);
-    va_end(args);
-    addrIsLabel = true;
-}
-
-Address Address::operator +(int i) const{
-    return *this - (-i);
-}
-Address Address::operator -(int i) const{
-    Address tmp = *this;
-    tmp.offset -= i;
-    tmp.setName();
-    return tmp;
-}
-
-void Address::setName(){
-    if(!isLabel()) sprintf(addrName, "%d(%s)", offset, reg->name());
-}
-
 //////////////////////////
 // RegisterSystem method
 /////////////////////////
@@ -305,7 +274,7 @@ RegisterSystem::RegisterSystem(){
     registers.push_back(zero);
 }
 
-Register *RegisterSystem::getReg(DATA_TYPE type, bool isCaller){
+Register *RegisterSystem::getReg(DATA_TYPE type, bool isCaller) {
     if(type == FLOAT_TYPE){
         return floatReg[findVacant(floatReg, 30)];
     }
@@ -315,7 +284,7 @@ Register *RegisterSystem::getReg(DATA_TYPE type, bool isCaller){
         return calleeReg[findVacant(calleeReg, 8)];
 }
 
-Register *RegisterSystem::getReg(const char *format, ...){
+Register *RegisterSystem::getReg(const char *format, ...) {
     char str[1024];
     va_list args;
     va_start(args, format);
@@ -328,6 +297,7 @@ Register *RegisterSystem::getReg(const char *format, ...){
         }
     }
     fprintf(stderr, "couldn't find register named: %s\n", str);
+    return NULL;
 }
 
 int RegisterSystem::findVacant(Register *arr[], int size){
@@ -341,7 +311,6 @@ int RegisterSystem::findVacant(Register *arr[], int size){
     arr[index]->save();
     return index;
 }
-
 
 ////////////////////////////////
 // ARSystem method

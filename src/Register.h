@@ -5,42 +5,7 @@
 #include <vector>
 #include <map>
 #include "header.h"
-// forward declaration
-class Register;
-
-// description variable address in memory, won't generate any code
-class Address{
-    public:
-        Address(Register *reg, int offset = 0);
-        Address(const char *format, ...);
-
-        bool operator ==(const Address &addr) const{
-            if(!strcmp(getName(), addr.getName())) return true;
-            else return false;
-        }
-        bool operator ==(const Address *addr) const{
-            return (*this) == *addr;
-        }
-        Address operator +(int i) const;
-        Address operator -(int i) const;
-
-        const char *getName() const{
-            return addrName;
-        }
-        const int getOffset() const{
-            return offset;
-        }
-        bool isLabel() const{
-            return addrIsLabel;
-        }
-    private:
-        void setName();
-        char addrName[100];
-
-        Register *reg;
-        int offset;
-        bool addrIsLabel;
-};
+#include "Address.h"
 
 class Register{
     public:
@@ -90,7 +55,6 @@ class Register{
         bool targetType;
         char reg_name[10];
 };
-
 
 // control the offset and gen prologue and epilogue
 class ARSystem{
