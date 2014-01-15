@@ -198,6 +198,8 @@ void Register::load(const Register *from){
     this->dirty = true;
 }
 void Register::load(const Address &addr, bool loadword){
+    ASSERT(&addr != NULL, "error: register: %s load empty addr", name());
+
     if(type() == FLOAT_TYPE){
         CodeGenStream("l.s\t%s, %s", name(), addr.getName());
     } else {
@@ -384,7 +386,6 @@ void ARSystem::addVariable(const char *str){
 
     CodeGenStream(".text");
 }
-
 void ARSystem::addVariable(SymbolTableEntry *entry, bool isParam){
     // global variable, store in global data field
     if(entry->nestingLevel == 0) {
@@ -397,7 +398,7 @@ void ARSystem::addVariable(SymbolTableEntry *entry, bool isParam){
         localVarible[entry] = addr;
 
         paramOffset += 4;
-        fprintf(stderr, "symbol %s in %s\n", entry->name, localVarible[entry]->getName());
+        DebugInfo("symbol %s in %s\n", entry->name, localVarible[entry]->getName());
     }
     // local variable, store in local ar field
     else {
@@ -407,7 +408,7 @@ void ARSystem::addVariable(SymbolTableEntry *entry, bool isParam){
         Address *addr = new Address(fp);
         *addr = *addr - totalOffset;
         localVarible[entry] = addr;
-        fprintf(stderr, "symbol %s in %s\n", entry->name, localVarible[entry]->getName());
+        DebugInfo("symbol %s in %s\n", entry->name, localVarible[entry]->getName());
     }
 }
 
@@ -421,18 +422,44 @@ Address ARSystem::getAddress(AST_NODE *node){
             }
         }
     } else if(node->type() == IDENTIFIER_NODE){
+    DebugInfo("node at line %d type %d try to get Address", node->linenumber, node->type());
         SymbolTableEntry *entry = node->getSymbol();
-        Address *addr;
+        TypeDescriptor *type = entry->attribute->getTypeDes();
+        Address addr("NULL");
 
+        // try to get ID from the declared address
         if(entry->nestingLevel == 0)
-            addr = globleVariable[entry];
+            addr = *globleVariable[entry];
         else 
-            addr = localVarible[entry];
+            addr = *localVarible[entry];
 
-        if(addr == NULL) 
-            fprintf(stderr, "try to get symbol: %s", entry->name);
-        assert(addr != NULL);
-        return *addr;
+        // if it is a declaration return base address
+        if(node->parent->type() == DECLARATION_NODE) return addr;
+        // else calculate the offset for array
+        if(node->getIDKind() == ARRAY_ID){
+            AST_NODE *dimNode = node->child;
+            Register *offsetReg = regSystem.getReg(INT_TYPE);
+            for(int i=0; dimNode; i++){
+                genGeneralNode(dimNode);
+                Register *reg = dimNode->getTempReg();
+                if(i==0) offsetReg->load(reg);
+                else {
+                    offsetReg->operand(BINARY_OP_MUL, offsetReg, type->getArrayDimensionSize(i));
+                    offsetReg->operand(BINARY_OP_ADD, offsetReg, reg);
+                }
+                DebugInfo("offset calculation for dim[%d] store in %s", i, offsetReg->name());
+                dimNode = dimNode->rightSibling;
+            }
+
+            Register *baseReg = regSystem.getReg(INT_TYPE);
+            baseReg->load(addr, true);
+            baseReg->operand(BINARY_OP_ADD, baseReg, offsetReg);
+
+            addr = Address(baseReg);
+        }
+
+        if(!strcmp("NULL", addr.getName()))
+            DebugInfo("Error, Can't find address for node@%d", node->linenumber);
     }
 
     Address *addr = new Address("NULL");
@@ -474,7 +501,6 @@ void ARSystem::prologue(const char* funcName){
     }
     totalOffset = 32;
 }
-
 void ARSystem::epilogue(){
     CodeGenStream("# epilogue sequence");
     char endTag[1024];
@@ -514,11 +540,9 @@ void ARSystem::globleInitRoutine(const char *start, const char *end){
 void ARSystem::getStartTag(char *outStr) const{
     sprintf(outStr, "%s", funcName);
 }
-
 void ARSystem::getEndTag(char *outStr) const{
     sprintf(outStr, "_end_%s", funcName);
 }
-
 void ARSystem::getTag(const char* prefix, char *outStr) const{
     static int index = 0;
     sprintf(outStr, "_%s_%s%d", prefix, funcName, index++);
@@ -531,9 +555,10 @@ void ARSystem::getTag(const char* prefix, char *outStr) const{
 void AST_NODE::setRegister(Register *tmp, bool autoload){
     reg = tmp;
     if(type() == IDENTIFIER_NODE){
-        if(autoload) reg->load(ar.getAddress(this));
-        reg->setTarget(ar.getAddress(this));
-        fprintf(stderr, "\t\t\t\t\e[35mcant find any, alloc a new register: %s to ID: %s\e[m\n", reg->name(), getSymbol()->name);
+        Address addr = ar.getAddress(this);
+        if(autoload) reg->load(addr);
+        reg->setTarget(addr);
+        DebugInfo("\t\t\t\t\e[35mcant find any, alloc a new register: %s to ID: %s\e[m\n", reg->name(), getSymbol()->name);
     }
     else 
         reg->setTarget(this);
@@ -548,14 +573,13 @@ Register *AST_NODE::getTempReg(int option){
 
     bool isID = (type() == IDENTIFIER_NODE && getSymbol()->attribute->getKind() == VARIABLE_ATTRIBUTE);
     Address address = ar.getAddress(this);
+
     if(!isReset && isID && regSystem.getFit(address) != NULL){
-        reg = regSystem.getFit(ar.getAddress(this));
-        fprintf(stderr, "\t\t\t\t\e[35mfound register: %s in same symbol: %s\e[m\n", reg->name(), this->getSymbol()->name);
+        reg = regSystem.getFit(address);
+        DebugInfo("\t\t\t\t\e[35mfound register: %s in same symbol: %s\e[m\n", reg->name(), this->getSymbol()->name);
     } else {
         DATA_TYPE type = getDataType();
-        if(isID) 
-            type = getSymbol()->attribute->getTypeDes()->getDataType();
-        Register *tmp = regSystem.getReg(type, isCaller);
+        Register *tmp = regSystem.getReg(getDataType(), isCaller);
         setRegister(tmp, !isDisableload);
     }
     return reg;

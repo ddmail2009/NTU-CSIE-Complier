@@ -76,9 +76,9 @@ class TypeDescriptor {
     int size() const {
         if(getKind() == SCALAR_TYPE_DESCRIPTOR) return 4;
         else{
-            int size = 0;
+            int size = 1;
             for(int i=0; i<getDimension(); i++)
-                size += getArrayDimensionSize(i);
+                size *= getArrayDimensionSize(i);
             return (size*4+3)/4*4;
         }
     }

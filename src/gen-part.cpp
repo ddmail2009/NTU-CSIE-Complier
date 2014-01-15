@@ -11,16 +11,46 @@
 
 extern RegisterSystem regSystem;
 
+
 /* Utility Function */
-void DebugInfo(AST_NODE *node, const char *format, ...){
+
+void DebugIndent(int n){
+#ifdef DEBUG
+    for(int i=0; i<n; i++)
+        fprintf(stderr, "\t");
+#endif
+}
+
+void DebugInfo(const char *format, ...){
 #ifdef DEBUG
     va_list args;
-    fprintf(stderr, "\e[31mline[%d]: ", node->linenumber);
     va_start(args, format);
+    fprintf(stderr, "\e[31m");
     vfprintf(stderr, format, args);
     fprintf(stderr, "\e[m\n");
     va_end(args);
 #endif
+}
+
+void DebugInfo(AST_NODE *node, const char *format, ...){
+#ifdef DEBUG
+    fprintf(stderr, "\e[32mline[%d]: \e[m", node->linenumber);
+    va_list args;
+    va_start(args, format);
+    DebugInfo(format, args);
+    va_end(args);
+#endif
+}
+
+void ASSERT(bool condition, const char *format, ...){
+    if(!condition){
+        DebugIndent(1);
+        va_list args;
+        va_start(args, format);
+        DebugInfo(format, args);
+        va_end(args);
+    }
+    assert(condition);
 }
 
 void CodeGenStream(const char *format, ...){

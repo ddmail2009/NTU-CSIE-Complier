@@ -14,7 +14,9 @@ enum SystemCallCode {
   EXIT,
 };
 
-void CodeGenStream(const char *format, ...);
+void DebugInfo(const char *format, ...);
 void DebugInfo(AST_NODE *node, const char *format, ...);
+void ASSERT(bool condition, const char *format, ...);
+void CodeGenStream(const char *format, ...);
 void genSyscall(const SystemCallCode &code, Register *value);
 #endif

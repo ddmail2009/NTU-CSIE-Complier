@@ -74,19 +74,19 @@ typedef enum DECL_KIND{
 } DECL_KIND;
 
 typedef enum AST_TYPE{
-    PROGRAM_NODE,
-    DECLARATION_NODE,
-    IDENTIFIER_NODE,
-    PARAM_LIST_NODE,
-    NUL_NODE,
-    BLOCK_NODE,
-    VARIABLE_DECL_LIST_NODE,
-    STMT_LIST_NODE,
-    STMT_NODE,
-    EXPR_NODE,
-    CONST_VALUE_NODE, //ex:1, 2, "constant string"
-    NONEMPTY_ASSIGN_EXPR_LIST_NODE,
-    NONEMPTY_RELOP_EXPR_LIST_NODE
+/*0*/    PROGRAM_NODE,
+/*1*/    DECLARATION_NODE,
+/*2*/    IDENTIFIER_NODE,
+/*3*/    PARAM_LIST_NODE,
+/*4*/    NUL_NODE,
+/*5*/    BLOCK_NODE,
+/*6*/    VARIABLE_DECL_LIST_NODE,
+/*7*/    STMT_LIST_NODE,
+/*8*/    STMT_NODE,
+/*9*/    EXPR_NODE,
+/*10*/    CONST_VALUE_NODE, //ex:1, 2, "constant string"
+/*11*/    NONEMPTY_ASSIGN_EXPR_LIST_NODE,
+/*12*/    NONEMPTY_RELOP_EXPR_LIST_NODE
 } AST_TYPE;
 
 //*************************

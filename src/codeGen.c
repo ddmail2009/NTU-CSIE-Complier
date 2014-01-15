@@ -142,10 +142,11 @@ void genAssignStmt(AST_NODE *node){
     AST_NODE *leftValue = node->child;
     AST_NODE *rightValue = node->child->rightSibling;
 
+    DebugInfo("gen right value reg");
     genExprRelatedNode(rightValue);
-
-    Register *leftreg = leftValue->getTempReg(RegDisableload);
     Register *rightreg = rightValue->getTempReg();
+    DebugInfo("gen left value reg");
+    Register *leftreg = leftValue->getTempReg(RegDisableload);
     leftreg->load(rightreg);
 }
 
@@ -284,11 +285,6 @@ void genFunctionCall(AST_NODE *node){
         Register *v0 = regSystem.getReg("$v0");
         Register *reg = node->getTempReg();
         reg->load(v0);
-        //CodeGenStream("addi\t$sp, $sp, -4");
-        //CodeGenStream("sw\t$12, 4($sp)");
-        //CodeGenStream("jal\t%s", curFuncNameNode->getIDName());
-        //CodeGenStream("addi\t$sp, $sp, 4");
-        //sp->operand(BINARY_OP_ADD, sp, -offset);
     }
 }
 
@@ -428,7 +424,6 @@ void genGeneralNode(AST_NODE *node){
             break;
         case IDENTIFIER_NODE:
             if(node->parent->type() != DECLARATION_NODE){
-                    fprintf(stderr, "gen ID node, paramter, type: %d\n", node->getDataType());
                 node->getTempReg();
             }
             break;
