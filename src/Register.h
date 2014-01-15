@@ -1,15 +1,23 @@
 #ifndef __Register_H
 #define __Register_H
 
+#include <cstdlib>
 #include <vector>
 #include <map>
 #include "header.h"
-// forward declaration
-class Address;
+#include "Address.h"
 
 class Register{
     public:
-        Register(const char *name, DATA_TYPE type = INT_TYPE);
+        Register(const char *n, DATA_TYPE t = INT_TYPE):
+            targetAddr(NULL),
+            dirty(false),
+            reg_type(t),
+            target(NULL),
+            targetType(0) {
+                strncpy(reg_name, n, 10);
+                targetAddr = new Address("");
+        }
         void clear();
 
         const char *name() const;
@@ -41,46 +49,11 @@ class Register{
 
         Address *targetAddr;
     private:
-        char reg_name[10];
-        DATA_TYPE reg_type;
         bool dirty;
-
+        DATA_TYPE reg_type;
         const void *target;
         bool targetType;
-};
-
-// description variable address in memory, won't generate any code
-class Address{
-    public:
-        Address(Register *reg, int offset = 0);
-        Address(const char *format, ...);
-
-        bool operator ==(const Address &addr) const{
-            if(!strcmp(getName(), addr.getName())) return true;
-            else return false;
-        }
-        bool operator ==(const Address *addr) const{
-            return (*this) == *addr;
-        }
-        Address operator +(int i) const;
-        Address operator -(int i) const;
-
-        const char *getName() const{
-            return addrName;
-        }
-        const int getOffset() const{
-            return offset;
-        }
-        bool isLabel() const{
-            return addrIsLabel;
-        }
-    private:
-        void setName();
-        char addrName[100];
-
-        Register *reg;
-        int offset;
-        bool addrIsLabel;
+        char reg_name[10];
 };
 
 // control the offset and gen prologue and epilogue

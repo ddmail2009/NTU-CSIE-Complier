@@ -8,7 +8,7 @@ YACCFLAG = -d
 LIBS = -lfl 
 DEBUG = 1
 
-parser: parser.tab.o alloc.o functions.o symbolTable.o semanticAnalysis.o codeGen.o gen-part.o Register.o
+parser: parser.tab.o alloc.o functions.o symbolTable.o semanticAnalysis.o codeGen.o gen-part.o Register.o Address.o
 	$(CC) -o $(TARGET) $+ $(LIBS)
 
 parser.tab.o: parser.tab.c lex.yy.c alloc.o functions.c symbolTable.o semanticAnalysis.o
@@ -45,6 +45,9 @@ ifeq ($(DEBUG), 0)
 else
 	$(CC) -c $+ -D DEBUG
 endif
+
+Address.o: Address.cpp
+	$(CC) -c Address.cpp
 
 clean:
 	rm -f $(TARGET) $(OBJECT) $(OUTPUT)
