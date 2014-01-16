@@ -23,9 +23,7 @@ int main() {
     float num;
     float midp;
 
-    write("Enter number :"); 
-
-    num = fread(); 
+    num = 3.2; 
 
     write(ceil(num));
     write("\n");

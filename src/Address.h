@@ -29,11 +29,8 @@ class Address{
         bool operator ==(const Address &addr) const {
             return !strcmp(getName(), addr.getName()) ? true : false;
         }
-
         bool operator ==(const Address *addr) const{ return (*this) == *addr; }
-
         Address operator +(int i) const { return *this - (-i); }
-
         Address operator -(int i) const {
             Address tmp = *this;
             tmp._offset -= i;
@@ -42,9 +39,7 @@ class Address{
         }
 
         const char *getName() const{ return addrName; }
-
         const int getOffset() const{ return _offset; }
-
         bool isLabel() const{ return addrIsLabel; }
     private:
         char addrName[100];

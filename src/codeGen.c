@@ -162,11 +162,13 @@ void genForStmt(AST_NODE* node){
     AST_NODE *blockNode = stepNode->rightSibling;
 
     genGeneralNode(initNode);
+    regSystem.saveAndClear();
     CodeGenStream("%s:", ForStmtTag);
     genGeneralNode(conditionNode);
     conditionNode->getTempReg()->branch("_End%s", ForStmtTag);
     genGeneralNode(blockNode);
     genGeneralNode(stepNode);
+    regSystem.saveAndClear();
     CodeGenStream("j\t%s", ForStmtTag);
     CodeGenStream("_End%s:", ForStmtTag);
 }
@@ -263,18 +265,28 @@ void genFunctionCall(AST_NODE *node){
     else if(!strcmp(curFuncName, "fread"))
         genReadFunction(node);
     else {
-        genGeneralNode(paramListNode);
-
         // TODO
         // Need to calculate the function offset
         Register *sp = regSystem.getReg("$sp");
-        int paramleft = curFuncNameNode->getSymbol()->attribute->getFuncSig()->getParameterCount();
+        FunctionSignature *func = curFuncNameNode->getSymbol()->attribute->getFuncSig();
+        Parameter* actualparam = func->getParams();
+
+        int paramleft = func->getParameterCount();
         sp->operand(BINARY_OP_SUB, sp, 4*paramleft);
 
         AST_NODE *param = paramListNode->child;
         for(int i=0; i<paramleft; i++){
             genGeneralNode(param);
-            param->getTempReg()->save(Address(sp) + 4*i + 4);
+            DebugInfo("param name: %s, type: %d, current type: %d", actualparam->parameterName, actualparam->type->getDataType(), param->getDataType());
+            if(actualparam->type->getDataType() == param->getDataType())
+                param->getTempReg()->save(Address(sp) + 4*i + 4);
+            else{
+                Register *reg = regSystem.getReg(actualparam->type->getDataType(), true);
+                reg->load(param->getTempReg());
+                reg->save(Address(sp) + 4*i + 4);
+            }
+
+            actualparam = actualparam->next;
             param = param->rightSibling;
         }
         //regSystem.saveTempReg();
@@ -317,13 +329,13 @@ void genExprNode(AST_NODE *node){
                 Register *rightReg = right->getTempReg();
                 Register *reg = node->getTempReg(RegforceCaller);
                 reg->operand(node->getBinaryOp(), leftReg, rightReg);
-                CodeGenStream("j\tEnd%s", branchTest);
                 if(node->getBinaryOp() == BINARY_OP_AND || node->getBinaryOp() == BINARY_OP_OR){
+                    CodeGenStream("j\tEnd%s", branchTest);
                     CodeGenStream("_False%s:", branchTest);
                     Register *reg = node->getTempReg(RegforceCaller);
                     reg->load(left->getTempReg());
+                    CodeGenStream("End%s:", branchTest);
                 }
-                CodeGenStream("End%s:", branchTest);
                 break;
             }
         case UNARY_OPERATION:
@@ -365,30 +377,24 @@ void genIfStmt(AST_NODE *node){
     AST_NODE* blockNode = conditionNode->rightSibling;
     AST_NODE* elseNode = blockNode->rightSibling;
 
-    bool hasElse = false;
     char branchName[1024];
-    if(elseNode->type() != NUL_NODE){
-        hasElse = true;
-        ar.getTag("_IfBranch", branchName);
-    }
+    ar.getTag("_IfBranch", branchName);
+    char EndName[1024];
+    sprintf(EndName, "_End%s", IfStmtTag);
 
     genGeneralNode(conditionNode);
-    if(hasElse) 
-        conditionNode->getTempReg()->branch(branchName);
+    conditionNode->getTempReg()->branch(branchName);
 
     genGeneralNode(blockNode);
-    if(hasElse){
-        char EndName[1024];
-        sprintf(EndName, "_End%s", IfStmtTag);
-        CodeGenStream("j\t%s", EndName);
-        CodeGenStream("%s:", branchName);
-        genGeneralNode(elseNode);
-        CodeGenStream("%s:", EndName);
-    }
+    regSystem.saveAndClear();
+    CodeGenStream("j\t%s", EndName);
+    CodeGenStream("%s:", branchName);
+    genGeneralNode(elseNode);
+    CodeGenStream("%s:", EndName);
 }
 
 void genConStmt(AST_NODE *node){
-    Register *reg = node->getTempReg();
+    Register *reg = node->getTempReg(RegforceCaller);
     switch(node->getConType()){
         case INTEGERC:
             reg->load(node->getConIntValue());

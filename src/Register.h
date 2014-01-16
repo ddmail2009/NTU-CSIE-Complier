@@ -12,6 +12,7 @@ class Register{
         Register(const char *n, DATA_TYPE t = INT_TYPE):
             targetAddr(NULL),
             dirty(false),
+            modified(false),
             reg_type(t),
             target(NULL),
             targetType(0) {
@@ -22,7 +23,8 @@ class Register{
 
         const char *name() const;
         const DATA_TYPE type() const;
-        bool isDirty();
+        bool isDirty() const;
+        bool isModified() const;
 
         void operand(BINARY_OPERATOR op, const Register *left, const int value);
         void operand(BINARY_OPERATOR op, const Register *left, const double value);
@@ -49,7 +51,7 @@ class Register{
 
         Address *targetAddr;
     private:
-        bool dirty;
+        bool dirty, modified;
         DATA_TYPE reg_type;
         const void *target;
         bool targetType;
@@ -100,12 +102,21 @@ class RegisterSystem{
             return NULL;
         }
 
+        void saveAndClear(){
+            for(std::vector<Register*>::iterator iter=registers.begin(); iter!=registers.end(); iter++){
+                (*iter)->save();
+                (*iter)->clear();
+            }
+        }
+
+        // clear all the register
         void clear(){
             for(std::vector<Register*>::iterator iter=registers.begin(); iter!=registers.end(); iter++){
                 (*iter)->clear();
             }
         }
 
+        // clear all recored but callee register, happened after jump back
         void clearRegRecord(){
             for(int i=0; i<10; i++){
                 callerReg[i]->clear();

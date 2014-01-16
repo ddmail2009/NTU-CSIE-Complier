@@ -17,7 +17,6 @@ int floor(float num) {
 }
 
 int main() {
-
     int r;
     float area;
     float rem;

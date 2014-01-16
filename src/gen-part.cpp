@@ -37,7 +37,9 @@ void DebugInfo(AST_NODE *node, const char *format, ...){
     fprintf(stderr, "\e[32mline[%d]: \e[m", node->linenumber);
     va_list args;
     va_start(args, format);
-    DebugInfo(format, args);
+    fprintf(stderr, "\e[31m");
+    vfprintf(stderr, format, args);
+    fprintf(stderr, "\e[m\n");
     va_end(args);
 #endif
 }

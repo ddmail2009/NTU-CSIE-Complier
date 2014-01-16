@@ -126,7 +126,7 @@ class FunctionSignature {
       return parametersCount;
     }
 
-    Parameter * getParams() const{
+    Parameter* getParams() const{
       return parameterList;
     }
 

@@ -35,6 +35,7 @@ bool BinaryNegate[] = {
 };
 
 void Register::clear(){
+    modified = false;
     dirty = false;
     target = NULL;
     targetAddr = new Address("");
@@ -49,8 +50,12 @@ const DATA_TYPE Register::type() const{
     return reg_type;
 }
 
-bool Register::isDirty(){
+bool Register::isDirty() const{
     return dirty;
+}
+
+bool Register::isModified() const{
+    return modified;
 }
 
 void Register::operand(BINARY_OPERATOR op, const Register *leftFrom, const int value){
@@ -63,6 +68,7 @@ void Register::operand(BINARY_OPERATOR op, const Register *leftFrom, const int v
         tmp->load(value);
         this->operand(op, leftFrom, tmp);
     }
+    this->modified = true;
 }
 
 void Register::operand(BINARY_OPERATOR op, const Register *leftFrom, const double value){
@@ -70,7 +76,6 @@ void Register::operand(BINARY_OPERATOR op, const Register *leftFrom, const doubl
     tmp->load(value);
     this->operand(op, leftFrom, tmp);
 }
-
 void Register::operand(BINARY_OPERATOR op, const Register *left, const Register *right){
     if(left->type() == FLOAT_TYPE && right->type() == INT_TYPE){
         Register *tmp = regSystem.getReg(FLOAT_TYPE, RegforceCaller);
@@ -82,8 +87,7 @@ void Register::operand(BINARY_OPERATOR op, const Register *left, const Register 
         tmp->load(left);
         left = tmp;
     }
-
-    if(type() == INT_TYPE && (left->type() == FLOAT_TYPE || right->type() == FLOAT_TYPE)){
+    if(op > BINARY_OP_DIV && (left->type() == FLOAT_TYPE || right->type() == FLOAT_TYPE)){
         static int branchIndex = 0;
         CodeGenStream("%s\t%s, %s", Binarycommand[op][FLOAT_TYPE], left->name(), right->name());
         CodeGenStream("bc1f _False%d", branchIndex);
@@ -96,6 +100,7 @@ void Register::operand(BINARY_OPERATOR op, const Register *left, const Register 
     } else 
         CodeGenStream("%s\t%s, %s, %s", Binarycommand[op][type()], name(), left->name(), right->name());
     this->dirty = true;
+    this->modified = true;
 }
 void Register::operand(UNARY_OPERATOR op, const Register *from){
     // TODO, have to consider float case
@@ -122,6 +127,7 @@ void Register::operand(UNARY_OPERATOR op, const Register *from){
             ;
     }
     this->dirty = true;
+    this->modified = true;
 }
 
 void Register::branch(const char *format, ...) const{
@@ -139,7 +145,6 @@ void Register::branch(const char *format, ...) const{
     }
     CodeGenStream("beqz\t%s, %s", regName, label);
 }
-
 void Register::branch2(const char *format, ...) const{
     char label[1024];
     va_list args;
@@ -189,6 +194,7 @@ void Register::load(const Register *from){
         CodeGenStream("mov.s\t%s, %s", name(), from->name());
     }
     this->dirty = true;
+    this->modified = true;
 }
 void Register::load(const Address &addr, bool loadword){
     ASSERT(&addr != NULL, "error: register: %s load empty addr", name());
@@ -204,9 +210,14 @@ void Register::load(const Address &addr, bool loadword){
 
 void Register::save(){
     if(targetType == 0){
+        //Temporary value
         ;
     } else {
-        this->save(*targetAddr);
+        //local variable
+        if(modified){
+            this->save(*targetAddr);
+            this->modified = false;
+        }
     }
     this->dirty = false;
 }
@@ -308,6 +319,11 @@ int RegisterSystem::findVacant(Register *arr[], int size){
         if(!arr[i]->isDirty())
             return i;
 
+    // find not modified register
+    for(int i=0; i<size; i++)
+        if(!arr[i]->isModified())
+            return i;
+
     // register full, save existing register and return random index
     int index = random()%size;
     arr[index]->save();
@@ -384,7 +400,6 @@ Address ARSystem::getAddress(AST_NODE *node){
             }
         }
     } else if(node->type() == IDENTIFIER_NODE){
-    DebugInfo("node at line %d type %d try to get Address", node->linenumber, node->type());
         SymbolTableEntry *entry = node->getSymbol();
         TypeDescriptor *type = entry->attribute->getTypeDes();
         Address addr("NULL");
@@ -396,29 +411,11 @@ Address ARSystem::getAddress(AST_NODE *node){
             addr = *localVarible[entry];
 
         // if it is a declaration return base address
-        if(node->parent->type() == DECLARATION_NODE) return addr;
+        if(node->parent->type() == DECLARATION_NODE) 
+            return addr;
         // else calculate the offset for array
-        if(node->getIDKind() == ARRAY_ID){
-            AST_NODE *dimNode = node->child;
-            Register *offsetReg = regSystem.getReg(INT_TYPE);
-            for(int i=0; dimNode; i++){
-                genGeneralNode(dimNode);
-                Register *reg = dimNode->getTempReg();
-                if(i==0) offsetReg->load(reg);
-                else {
-                    offsetReg->operand(BINARY_OP_MUL, offsetReg, type->getArrayDimensionSize(i));
-                    offsetReg->operand(BINARY_OP_ADD, offsetReg, reg);
-                }
-                DebugInfo("offset calculation for dim[%d] store in %s", i, offsetReg->name());
-                dimNode = dimNode->rightSibling;
-            }
-
-            Register *baseReg = regSystem.getReg(INT_TYPE);
-            baseReg->load(addr, true);
-            baseReg->operand(BINARY_OP_ADD, baseReg, offsetReg);
-
-            addr = Address(baseReg);
-        }
+        // else 
+        return addr;
 
         if(!strcmp("NULL", addr.getName()))
             DebugInfo("Error, Can't find address for node@%d", node->linenumber);
@@ -462,13 +459,14 @@ void ARSystem::prologue(const char* funcName){
         initroutine.clear();
     }
     totalOffset = 32;
+    regSystem.clearRegRecord();
 }
 void ARSystem::epilogue(){
     CodeGenStream("# epilogue sequence");
     char endTag[1024];
     getEndTag(endTag);
     CodeGenStream("%s:", endTag);
-    /* naive restore Caller Save Register */
+    /* aive restore Caller Save Register */
     for(int i=0; i<8; i++){
         Register *reg = regSystem.getReg("$s%d", i);
         reg->load(Address(fp) - 4*i - 4);
@@ -538,7 +536,7 @@ Register *AST_NODE::getTempReg(int option){
 
     if(!isReset && isID && regSystem.getFit(address) != NULL){
         reg = regSystem.getFit(address);
-        DebugInfo("\t\t\t\t\e[35mfound register: %s in same symbol: %s\e[m\n", reg->name(), this->getSymbol()->name);
+        DebugInfo("\t\t\t\t\e[35mfound register: %s in same symbol: %s with addr: %s\e[m", reg->name(), this->getSymbol()->name, address.getName());
     } else {
         DATA_TYPE type = getDataType();
         Register *tmp = regSystem.getReg(getDataType(), isCaller);
@@ -555,6 +553,7 @@ const char *AST_NODE::getTempName(){
 DATA_TYPE AST_NODE::getDataType() const {
     if(type() == IDENTIFIER_NODE && getSymbol()->attribute->getKind() == VARIABLE_ATTRIBUTE)
         return getSymbol()->attribute->getTypeDes()->getDataType();
-
+    else if(type() == EXPR_NODE && getExprKind() == BINARY_OPERATION && getBinaryOp() > BINARY_OP_DIV)
+        return INT_TYPE;
     return dataType;
 }

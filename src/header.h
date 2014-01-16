@@ -237,17 +237,17 @@ class AST_NODE {
             return semantic_value.const1->const_u.sc;
         }
 
-        DECL_KIND getDeclKind() {
+        DECL_KIND getDeclKind() const{
             assert(type() == DECLARATION_NODE);
             return semantic_value.declSemanticValue.kind;
         }
 
-        IDENTIFIER_KIND getIDKind() {
+        IDENTIFIER_KIND getIDKind() const{
             assert(type() == IDENTIFIER_NODE);
             return semantic_value.identifierSemanticValue.kind;
         }
 
-        EXPR_KIND getExprKind() {
+        EXPR_KIND getExprKind() const {
             assert(type() == EXPR_NODE);
             return semantic_value.exprSemanticValue.kind;
         }
