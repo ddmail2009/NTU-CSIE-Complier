@@ -6,6 +6,7 @@
 #include <map>
 #include "header.h"
 #include "Address.h"
+#include "gen-part.h"
 
 class Register{
     public:
@@ -93,12 +94,8 @@ class RegisterSystem{
         Register *getReg(const char *format, ...);
 
         Register *getFit(const Address &addr){
-            for(int i=0; i<8; i++)
-                if(calleeReg[i]->fit(addr)) return calleeReg[i];
-            for(int i=0; i<8; i++)
-                if(callerReg[i]->fit(addr)) return callerReg[i];
-            for(int i=0; i<30; i++)
-                if(floatReg[i]->fit(addr)) return floatReg[i];
+            for(std::vector<int>::size_type i=0; i!=registers.size(); i++)
+                if(registers[i]->fit(addr)) return registers[i];
             return NULL;
         }
 
@@ -118,20 +115,28 @@ class RegisterSystem{
 
         // clear all recored but callee register, happened after jump back
         void clearRegRecord(){
-            for(int i=0; i<10; i++){
+            for(std::vector<int>::size_type i=0; i!=callerReg.size(); i++)
                 callerReg[i]->clear();
-            }
-            for(int i=0; i<30; i++){
-                floatReg[i]->clear();
-            }
+            for(std::vector<int>::size_type i=0; i!=floatCaller.size(); i++)
+                floatCaller[i]->clear();
+        }
+
+        std::vector<Register*> getCallee(){
+            std::vector<Register*> tmp;
+            for(std::vector<int>::size_type i=0; i!=calleeReg.size(); i++)
+                tmp.push_back(calleeReg[i]);
+            for(std::vector<int>::size_type i=0; i!=floatCallee.size(); i++)
+                tmp.push_back(floatCallee[i]);
+            return tmp;
         }
     private:
-        int findVacant(Register *arr[], int size);
+        int findVacant(std::vector<Register*> v);
 
         std::vector<Register*> registers;
-        Register *calleeReg[8];
-        Register *callerReg[10];
-        Register *floatReg[30];
+        std::vector<Register*> calleeReg;
+        std::vector<Register*> callerReg;
+        std::vector<Register*> floatCaller;
+        std::vector<Register*> floatCallee;
 };
 
 #endif

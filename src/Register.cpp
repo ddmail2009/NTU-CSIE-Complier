@@ -257,24 +257,29 @@ RegisterSystem::RegisterSystem(){
     srand(time(NULL));
     for(int i=0; i<8; i++){
         sprintf(tmp, "$s%d", i);
-        calleeReg[i] = new Register(tmp);
-        registers.push_back(calleeReg[i]);
+        Register *reg = new Register(tmp, INT_TYPE);
+        calleeReg.push_back(reg);
+        registers.push_back(reg);
     }
 
     for(int i=0; i<10; i++){
         sprintf(tmp, "$t%d", i);
-        callerReg[i] = new Register(tmp);
-        registers.push_back(callerReg[i]);
+        Register *reg = new Register(tmp, INT_TYPE);
+        callerReg.push_back(reg);
+        registers.push_back(reg);
     }
 
-    for(int i=0; i<30; i++){
+    for(int i=1; i<30; i++){
         sprintf(tmp, "$f%d", i);
-        floatReg[i] = new Register(tmp, FLOAT_TYPE);
-        registers.push_back(floatReg[i]);
+        Register *reg = new Register(tmp, FLOAT_TYPE);
+        if(i < 15) floatCallee.push_back(reg);
+        else floatCaller.push_back(reg);
+        registers.push_back(reg);
     }
-
     Register *v0 = new Register("$v0", INT_TYPE);
     registers.push_back(v0);
+    Register *f0 = new Register("$f0", FLOAT_TYPE);
+    registers.push_back(f0);
     Register *ra = new Register("$ra", INT_TYPE);
     registers.push_back(ra);
     Register *fp = new Register("$fp", INT_TYPE);
@@ -288,13 +293,18 @@ RegisterSystem::RegisterSystem(){
 }
 
 Register *RegisterSystem::getReg(DATA_TYPE type, bool isCaller) {
-    if(type == FLOAT_TYPE){
-        return floatReg[findVacant(floatReg, 30)];
+    if(isCaller){
+        if(type == FLOAT_TYPE)
+            return floatCaller[findVacant(floatCaller)];
+        else
+            return callerReg[findVacant(callerReg)];
     }
-    else if(isCaller) 
-        return callerReg[findVacant(callerReg, 10)];
-    else 
-        return calleeReg[findVacant(calleeReg, 8)];
+    else {
+        if(type == FLOAT_TYPE)
+            return floatCallee[findVacant(floatCallee)];
+        else
+            return calleeReg[findVacant(calleeReg)];
+    }
 }
 
 Register *RegisterSystem::getReg(const char *format, ...) {
@@ -313,20 +323,19 @@ Register *RegisterSystem::getReg(const char *format, ...) {
     return NULL;
 }
 
-int RegisterSystem::findVacant(Register *arr[], int size){
+int RegisterSystem::findVacant(std::vector<Register*> v){
     // find clean register
-    for(int i=0; i<size; i++)
-        if(!arr[i]->isDirty())
-            return i;
+    for(std::vector<int>::size_type i=0; i!=v.size(); i++)
+        if(!v[i]->isDirty()) return i;
 
     // find not modified register
-    for(int i=0; i<size; i++)
-        if(!arr[i]->isModified())
-            return i;
+    for(std::vector<int>::size_type i=0; i!=v.size(); i++)
+        if(!v[i]->isModified()) return i;
 
     // register full, save existing register and return random index
-    int index = random()%size;
-    arr[index]->save();
+    DebugInfo("v.size: %d", v.size());
+    int index = random()%v.size();
+    v[index]->save();
     return index;
 }
 
@@ -445,10 +454,10 @@ void ARSystem::prologue(const char* funcName){
     sp->operand(BINARY_OP_SUB, sp, tmp);
 
     /* naive save Caller Save Register */
-    for(int i=0; i<8; i++){
-        Register *reg = regSystem.getReg("$s%d", i);
-        reg->save(Address(fp) - 4*i - 4);
-    }
+    std::vector<Register*> callee = regSystem.getCallee();
+    DebugInfo("%d", callee.size());
+    for(std::vector<int>::size_type i=0; i!=callee.size(); i++)
+        callee[i]->save(Address(fp) - 4*i - 4);
 
     CodeGenStream("_begin_%s:", funcName);
     if(!strcmp(funcName, "main")){
@@ -458,7 +467,7 @@ void ARSystem::prologue(const char* funcName){
         }
         initroutine.clear();
     }
-    totalOffset = 32;
+    totalOffset = 4*callee.size();
     regSystem.clearRegRecord();
 }
 void ARSystem::epilogue(){
@@ -467,10 +476,9 @@ void ARSystem::epilogue(){
     getEndTag(endTag);
     CodeGenStream("%s:", endTag);
     /* aive restore Caller Save Register */
-    for(int i=0; i<8; i++){
-        Register *reg = regSystem.getReg("$s%d", i);
-        reg->load(Address(fp) - 4*i - 4);
-    }
+    std::vector<Register*> callee = regSystem.getCallee();
+    for(std::vector<int>::size_type i=0; i!=callee.size(); i++)
+        callee[i]->load(Address(fp) - 4*i - 4);
 
     Register *ra = regSystem.getReg("$ra");
     Address address(fp);

@@ -277,9 +277,10 @@ void genFunctionCall(AST_NODE *node){
         AST_NODE *param = paramListNode->child;
         for(int i=0; i<paramleft; i++){
             genGeneralNode(param);
-            DebugInfo("param name: %s, type: %d, current type: %d", actualparam->parameterName, actualparam->type->getDataType(), param->getDataType());
+            // if two param type match, just save
             if(actualparam->type->getDataType() == param->getDataType())
                 param->getTempReg()->save(Address(sp) + 4*i + 4);
+            // else convert to the corresponding param type
             else{
                 Register *reg = regSystem.getReg(actualparam->type->getDataType(), true);
                 reg->load(param->getTempReg());
@@ -294,9 +295,14 @@ void genFunctionCall(AST_NODE *node){
         regSystem.clearRegRecord();
 
         sp->operand(BINARY_OP_ADD, sp, 4*paramleft);
-        Register *v0 = regSystem.getReg("$v0");
+
+        Register *returnReg;
+        if(curFuncNameNode->getSymbol()->attribute->getDataType() == INT_TYPE)
+            returnReg = regSystem.getReg("$v0");
+        else 
+            returnReg = regSystem.getReg("$f0");
         Register *reg = node->getTempReg();
-        reg->load(v0);
+        reg->load(returnReg);
     }
 }
 
@@ -357,8 +363,21 @@ void genReturnStmt(AST_NODE *node){
     DebugInfo(node, "gen return stmt");
     genExprRelatedNode(node->child);
 
-    Register *v0 = regSystem.getReg("$v0");
-    v0->load(node->child->getTempReg());
+    AST_NODE *tmp = node;
+    while(1){
+        if(tmp->type() == DECLARATION_NODE && tmp->getDeclKind() == FUNCTION_DECL)
+            break;
+        tmp = tmp->parent;
+    }
+    tmp = tmp->child->rightSibling;
+
+    if(tmp->getSymbol()->attribute->getDataType() == INT_TYPE){
+        Register *v0 = regSystem.getReg("$v0");
+        v0->load(node->child->getTempReg());
+    } else {
+        Register *f0 = regSystem.getReg("$f0");
+        f0->load(node->child->getTempReg());
+    }
 
     char EndTag[1024];
     ar.getEndTag(EndTag);
