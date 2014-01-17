@@ -1,12 +1,12 @@
 TARGET = parser
-OBJECT = parser.tab.c parser.tab.o lex.yy.c alloc.o functions.o semanticAnalysis.o symbolTable.o codeGen.o gen-part.o
+OBJECT = parser.tab.c parser.tab.o lex.yy.c alloc.o functions.o semanticAnalysis.o symbolTable.o codeGen.o gen-part.o Register.o Address.o
 OUTPUT = parser.output parser.tab.h
 CC = g++ -g -Wall
 LEX = flex
 YACC = bison -v
 YACCFLAG = -d
 LIBS = -lfl 
-DEBUG = 1
+DEBUG = 0
 
 parser: parser.tab.o alloc.o functions.o symbolTable.o semanticAnalysis.o codeGen.o gen-part.o Register.o Address.o
 	$(CC) -o $(TARGET) $+ $(LIBS)

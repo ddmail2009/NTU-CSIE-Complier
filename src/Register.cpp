@@ -286,7 +286,9 @@ void Register::save(){
     this->dirty = false;
 }
 void Register::save(const Address &addr){
+#ifdef DEBUG
     fprintf(stderr, "\t\t\t\t\e[35mregister '%s' save to addr: %s\e[m\n", name(), addr.getName());
+#endif
     if(type() == FLOAT_TYPE)
         CodeGenStream("s.s\t%s, %s", name(), addr.getName());
     else
@@ -671,7 +673,7 @@ Register *AST_NODE::getTempReg(int option){
         DebugInfo("\t\t\t\t\e[35mfound register: %s in same symbol: %s with addr: %s\e[m", reg->name(), this->getSymbol()->name, address.getName());
     } else {
         DebugInfo("try to get new register");
-        DATA_TYPE type = getDataType();
+        // DATA_TYPE type = getDataType();
         Register *tmp = regSystem.getReg(getDataType(), isCaller);
         setRegister(tmp, !isDisableload);
     }
