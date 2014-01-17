@@ -30,6 +30,7 @@ class Register{
         void operand(BINARY_OPERATOR op, const Register *left, const int value);
         void operand(BINARY_OPERATOR op, const Register *left, const double value);
         void operand(BINARY_OPERATOR op, const Register *left, const Register *right);
+        void operand(BINARY_OPERATOR op, Register *left, Register *right);
         void operand(UNARY_OPERATOR op, const Register *from);
 
         void branch(const char *format, ...) const;
@@ -38,8 +39,9 @@ class Register{
         void load(int value);
         void load(double value);
         void load(const char *label);
+        void load(Register *from);
         void load(const Register *from);
-        void load(const Address &addr, bool loadWord = true);
+        void load(const Address &addr);
 
         // save to the target, if it is a ast_node, it's a temporary value.
         void save();
@@ -51,8 +53,8 @@ class Register{
         bool fit(const Address &addr) const;
 
         Address *targetAddr;
-    private:
         bool dirty, modified;
+    private:
         DATA_TYPE reg_type;
         const void *target;
         bool targetType;
@@ -70,7 +72,7 @@ class ARSystem{
         void prologue(const char *funcName);
         void epilogue();
 
-        void globleInitRoutine(const char *start, const char *end);
+        void globalInitRoutine(const char *start, const char *end);
 
         void getStartTag(char *outStr) const;
         void getEndTag(char *outStr) const;
@@ -80,9 +82,10 @@ class ARSystem{
 
         char funcName[256];
         int totalOffset, paramOffset;
+        std::map<AST_NODE*, Address*> arrVariable;
         std::map<const char*, const char*> strConst;
         std::map<SymbolTableEntry*, Address*> localVarible;
-        std::map<SymbolTableEntry*, Address*> globleVariable;
+        std::map<SymbolTableEntry*, Address*> globalVariable;
         std::vector<char **> initroutine;
 };
 
@@ -129,9 +132,17 @@ class RegisterSystem{
                 tmp.push_back(floatCallee[i]);
             return tmp;
         }
-    private:
-        int findVacant(std::vector<Register*> v);
 
+        void lock(Register *reg, bool l){
+            lockMap[reg] = l;
+        }
+    private:
+        bool isLocked(Register *reg){
+            return lockMap[reg];
+        }
+
+        int findVacant(std::vector<Register*> v);
+        std::map<Register*, bool> lockMap;
         std::vector<Register*> registers;
         std::vector<Register*> calleeReg;
         std::vector<Register*> callerReg;

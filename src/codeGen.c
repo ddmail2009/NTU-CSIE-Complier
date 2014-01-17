@@ -57,7 +57,7 @@ void genVariable(AST_NODE *IDNode, bool isParam = false){
             Register *reg = IDNode->child->getTempReg();
             reg->save(addr);
             CodeGenStream("j %s", routineEnd);
-            ar.globleInitRoutine(routineStart, routineEnd);
+            ar.globalInitRoutine(routineStart, routineEnd);
         }
     }
     // local variable, store in local ar field
@@ -145,9 +145,12 @@ void genAssignStmt(AST_NODE *node){
     DebugInfo("gen right value reg");
     genExprRelatedNode(rightValue);
     Register *rightreg = rightValue->getTempReg();
+    regSystem.lock(rightreg, true);
     DebugInfo("gen left value reg");
     Register *leftreg = leftValue->getTempReg(RegDisableload);
     leftreg->load(rightreg);
+    leftreg->save();
+    regSystem.lock(rightreg, false);
 }
 
 void genForStmt(AST_NODE* node){
@@ -161,11 +164,17 @@ void genForStmt(AST_NODE* node){
     AST_NODE *stepNode = conditionNode->rightSibling;
     AST_NODE *blockNode = stepNode->rightSibling;
 
+    DebugInfo("init Node Generate");
     genGeneralNode(initNode);
+
     regSystem.saveAndClear();
     CodeGenStream("%s:", ForStmtTag);
+    DebugInfo("condition Node Generate");
     genGeneralNode(conditionNode);
     conditionNode->getTempReg()->branch("_End%s", ForStmtTag);
+    regSystem.saveAndClear();
+
+    DebugInfo("block Node Generate");
     genGeneralNode(blockNode);
     genGeneralNode(stepNode);
     regSystem.saveAndClear();
@@ -277,6 +286,7 @@ void genFunctionCall(AST_NODE *node){
         AST_NODE *param = paramListNode->child;
         for(int i=0; i<paramleft; i++){
             genGeneralNode(param);
+            DebugInfo("acutal name: %s, type:%d, param type: %d", actualparam->parameterName, actualparam->type->getDataType(), param->getDataType());
             // if two param type match, just save
             if(actualparam->type->getDataType() == param->getDataType())
                 param->getTempReg()->save(Address(sp) + 4*i + 4);
@@ -316,6 +326,7 @@ void genExprNode(AST_NODE *node){
 
                 DebugInfo(node, "gen left");
                 genExprRelatedNode(left);
+                regSystem.lock(left->getTempReg(), true);
 
                 char branchTest[1024];
                 ar.getTag("LogicalShort", branchTest);
@@ -329,7 +340,8 @@ void genExprNode(AST_NODE *node){
                 }
 
                 DebugInfo(node, "gen right");
-                genExprRelatedNode(node->child->rightSibling);
+                genExprRelatedNode(right);
+                regSystem.lock(right->getTempReg(), true);
 
                 Register *leftReg = left->getTempReg();
                 Register *rightReg = right->getTempReg();
@@ -342,6 +354,8 @@ void genExprNode(AST_NODE *node){
                     reg->load(left->getTempReg());
                     CodeGenStream("End%s:", branchTest);
                 }
+                regSystem.lock(left->getTempReg(), false);
+                regSystem.lock(right->getTempReg(), false);
                 break;
             }
         case UNARY_OPERATION:
@@ -424,7 +438,7 @@ void genConStmt(AST_NODE *node){
         case STRINGC:
             ar.addVariable(node->getCharPtrValue());
             // do not load word, instead load address, specify 'la' instead of 'lw'
-            reg->load(ar.getAddress(node), false);
+            reg->load(ar.getAddress(node));
             break;
         default:
             DebugInfo(node, "Unhandle case in genExprRelatedNode:constValue, conType: %d", node->getConType());

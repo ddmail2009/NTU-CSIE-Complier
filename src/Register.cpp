@@ -11,7 +11,6 @@
 #include <ctime>
 
 extern ARSystem ar;
-
 extern RegisterSystem regSystem;
 
 const char Binarycommand[][2][10] = {
@@ -70,7 +69,6 @@ void Register::operand(BINARY_OPERATOR op, const Register *leftFrom, const int v
     }
     this->modified = true;
 }
-
 void Register::operand(BINARY_OPERATOR op, const Register *leftFrom, const double value){
     Register *tmp = regSystem.getReg(FLOAT_TYPE, RegforceCaller);
     tmp->load(value);
@@ -101,6 +99,34 @@ void Register::operand(BINARY_OPERATOR op, const Register *left, const Register 
         CodeGenStream("%s\t%s, %s, %s", Binarycommand[op][type()], name(), left->name(), right->name());
     this->dirty = true;
     this->modified = true;
+}
+void Register::operand(BINARY_OPERATOR op,  Register *left, Register *right){
+    if(left->type() == FLOAT_TYPE && right->type() == INT_TYPE){
+        Register *tmp = regSystem.getReg(FLOAT_TYPE, RegforceCaller);
+        tmp->load(right);
+        right = tmp;
+    }
+    if(left->type() == INT_TYPE && right->type() == FLOAT_TYPE){
+        Register *tmp = regSystem.getReg(FLOAT_TYPE, RegforceCaller);
+        tmp->load(left);
+        left = tmp;
+    }
+    if(op > BINARY_OP_DIV && (left->type() == FLOAT_TYPE || right->type() == FLOAT_TYPE)){
+        static int branchIndex = 0;
+        CodeGenStream("%s\t%s, %s", Binarycommand[op][FLOAT_TYPE], left->name(), right->name());
+        CodeGenStream("bc1f _False%d", branchIndex);
+        CodeGenStream("li\t%s, %d", name(), !BinaryNegate[op]);
+        CodeGenStream("j\tEnd_False%d", branchIndex);
+        CodeGenStream("_False%d:", branchIndex);
+        CodeGenStream("li\t%s, %d", name(), BinaryNegate[op]);
+        CodeGenStream("End_False%d:", branchIndex);
+        branchIndex ++;
+    } else 
+        CodeGenStream("%s\t%s, %s, %s", Binarycommand[op][type()], name(), left->name(), right->name());
+    this->dirty = true;
+    this->modified = true;
+    if(left->targetAddr->_volatile) left->clear();
+    if(right->targetAddr->_volatile) right->clear();
 }
 void Register::operand(UNARY_OPERATOR op, const Register *from){
     // TODO, have to consider float case
@@ -145,6 +171,7 @@ void Register::branch(const char *format, ...) const{
     }
     CodeGenStream("beqz\t%s, %s", regName, label);
 }
+
 void Register::branch2(const char *format, ...) const{
     char label[1024];
     va_list args;
@@ -179,7 +206,8 @@ void Register::load(const char *label){
         CodeGenStream("la\t%s, %s", name(), label);
     this->dirty = true;
 }
-void Register::load(const Register *from){
+void Register::load(Register *from){
+    if(from == this) return;
     if(type() == INT_TYPE && from->type() == FLOAT_TYPE){
         Register *reg = regSystem.getReg(FLOAT_TYPE);
         CodeGenStream("mov.s\t%s, %s", reg->name(), from->name());
@@ -195,15 +223,51 @@ void Register::load(const Register *from){
     }
     this->dirty = true;
     this->modified = true;
+
+    if(from->targetAddr->_volatile)
+        from->clear();
 }
-void Register::load(const Address &addr, bool loadword){
+void Register::load(const Register *from){
+    if(from == this) return;
+    if(type() == INT_TYPE && from->type() == FLOAT_TYPE){
+        Register *reg = regSystem.getReg(FLOAT_TYPE);
+        CodeGenStream("mov.s\t%s, %s", reg->name(), from->name());
+        CodeGenStream("cvt.w.s\t%s, %s", reg->name(), reg->name());
+        CodeGenStream("mfc1\t%s, %s", name(), reg->name());
+    } else if(type() == FLOAT_TYPE && from->type() == INT_TYPE){
+        CodeGenStream("mtc1\t%s, %s", from->name(), name());
+        CodeGenStream("cvt.s.w\t%s, %s", name(), name());
+    } else if(type() == INT_TYPE){
+        CodeGenStream("move\t%s, %s", name(), from->name());
+    } else if(type() == FLOAT_TYPE){
+        CodeGenStream("mov.s\t%s, %s", name(), from->name());
+    }
+    this->dirty = true;
+    this->modified = true;
+
+}
+void Register::load(const Address &addr){
     ASSERT(&addr != NULL, "error: register: %s load empty addr", name());
 
-    if(type() == FLOAT_TYPE){
-        CodeGenStream("l.s\t%s, %s", name(), addr.getName());
-    } else {
-        if(addr.isLabel() && !loadword) load(addr.getName());
-        else CodeGenStream("lw\t%s, %s", name(), addr.getName());
+    if(addr.loadType == LOADWORD){
+        if(type() == INT_TYPE)
+            CodeGenStream("lw\t%s, %s", name(), addr.getName());
+        else 
+            CodeGenStream("l.s\t%s, %s", name(), addr.getName());
+    } 
+    else if(addr.loadType == LOADADDR){
+        if(type() == INT_TYPE){
+            DebugInfo("addr.hasReg: %d", addr.hasReg());
+            if(addr.hasReg()){
+                int offset = addr.getOffset();
+                CodeGenStream("move\t%s, %s", name(), addr.getRegName());
+                if(offset != 0)operand(BINARY_OP_ADD, this, offset);
+            } else {
+                CodeGenStream("la\t%s, %s", name(), addr.getName());
+            }
+        }
+        else 
+            ASSERT(0, "error: can't use float register %s load addr from %s", name(), addr.getName());
     }
     this->dirty = true;
 }
@@ -214,7 +278,7 @@ void Register::save(){
         ;
     } else {
         //local variable
-        if(modified){
+        if(this->modified == true){
             this->save(*targetAddr);
             this->modified = false;
         }
@@ -225,8 +289,11 @@ void Register::save(const Address &addr){
     fprintf(stderr, "\t\t\t\t\e[35mregister '%s' save to addr: %s\e[m\n", name(), addr.getName());
     if(type() == FLOAT_TYPE)
         CodeGenStream("s.s\t%s, %s", name(), addr.getName());
-    else 
+    else
         CodeGenStream("sw\t%s, %s", name(), addr.getName());
+
+    if(targetAddr->_volatile == true) 
+        this->clear();
 }
 
 void Register::setTarget(const AST_NODE *node){
@@ -290,6 +357,9 @@ RegisterSystem::RegisterSystem(){
     registers.push_back(a0);
     Register *zero = new Register("$zero", INT_TYPE);
     registers.push_back(zero);
+
+    for(std::vector<int>::size_type i=0; i!=registers.size(); i++)
+        lockMap[registers[i]] = false;
 }
 
 Register *RegisterSystem::getReg(DATA_TYPE type, bool isCaller) {
@@ -326,17 +396,23 @@ Register *RegisterSystem::getReg(const char *format, ...) {
 int RegisterSystem::findVacant(std::vector<Register*> v){
     // find clean register
     for(std::vector<int>::size_type i=0; i!=v.size(); i++)
-        if(!v[i]->isDirty()) return i;
+        if(!v[i]->isDirty() && !isLocked(v[i])) return i;
 
     // find not modified register
     for(std::vector<int>::size_type i=0; i!=v.size(); i++)
-        if(!v[i]->isModified()) return i;
+        if(!v[i]->isModified() && !isLocked(v[i])) return i;
 
     // register full, save existing register and return random index
-    DebugInfo("v.size: %d", v.size());
-    int index = random()%v.size();
-    v[index]->save();
-    return index;
+    while(1){
+        int index = random()%v.size();
+        if(lockMap[&(*v[index])] == true) {
+            DebugInfo("lock reg: %s found, find another", v[index]->name());
+            continue;
+        }
+        v[index]->save();
+        v[index]->clear();
+        return index;
+    }
 }
 
 ////////////////////////////////
@@ -363,12 +439,12 @@ void ARSystem::addVariable(const char *str){
         if(!strcmp(str, iter->first)) return;
     }
 
-    // declare the const str
-    CodeGenStream(".data");
-
     char *stringName = new char[1024];
     getTag("_STR", stringName);
     strConst[str] = stringName;
+
+    // declare the const str
+    CodeGenStream(".data");
     CodeGenStream("%s: .asciiz %s", stringName, str);
 
     CodeGenStream(".text");
@@ -376,7 +452,9 @@ void ARSystem::addVariable(const char *str){
 void ARSystem::addVariable(SymbolTableEntry *entry, bool isParam){
     // global variable, store in global data field
     if(entry->nestingLevel == 0) {
-        globleVariable[entry] = new Address("_%s", entry->name);
+        globalVariable[entry] = new Address("_%s", entry->name);
+        if(entry->attribute->getTypeDes()->kind == ARRAY_TYPE_DESCRIPTOR)
+            globalVariable[entry]->loadType = LOADADDR;
     }
     // parameter, store in caller's ar field
     else if(isParam){
@@ -405,7 +483,9 @@ Address ARSystem::getAddress(AST_NODE *node){
     if(node->type() == CONST_VALUE_NODE && node->getConType() == STRINGC){
         for(std::map<const char*, const char*>::iterator iter=strConst.begin(); iter!=strConst.end(); iter++){
             if(!strcmp(node->getCharPtrValue(), iter->first)){
-                return Address(iter->second);
+                Address addr(iter->second);
+                addr.loadType = LOADADDR;
+                return addr;
             }
         }
     } else if(node->type() == IDENTIFIER_NODE){
@@ -415,15 +495,61 @@ Address ARSystem::getAddress(AST_NODE *node){
 
         // try to get ID from the declared address
         if(entry->nestingLevel == 0)
-            addr = *globleVariable[entry];
-        else 
+            addr = *globalVariable[entry];
+        else
             addr = *localVarible[entry];
 
         // if it is a declaration return base address
-        if(node->parent->type() == DECLARATION_NODE) 
+        if(node->parent->type() == DECLARATION_NODE || node->parent->type() ==  PARAM_LIST_NODE) 
             return addr;
         // else calculate the offset for array
-        // else 
+        else if(node->getIDKind() == ARRAY_ID){
+            if(arrVariable[node] != NULL) return *arrVariable[node];
+
+            Register *offset = regSystem.getReg(INT_TYPE);
+            DebugInfo("baseAddr of %s is %s, offset Reg: %s", node->getIDName(), addr.getName(), offset->name());
+            regSystem.lock(offset, true);
+            AST_NODE *tmp = node->child;
+            int paramCount = 0;
+            for(int i=0; i<type->getDimension(); i++){
+                DebugInfo("genGeneral");
+                if(tmp) {
+                    paramCount++;
+                    genGeneralNode(tmp);
+                    regSystem.lock(tmp->getTempReg(), true);
+                    if(i==0) offset->load(tmp->getTempReg());
+                    else {
+                        offset->operand(BINARY_OP_MUL, offset, type->getArrayDimensionSize(i));
+                        offset->operand(BINARY_OP_ADD, offset, tmp->getTempReg());
+                    }
+                    regSystem.lock(tmp->getTempReg(), false);
+                    tmp = tmp->rightSibling;
+                }
+                else
+                    offset->operand(BINARY_OP_MUL, offset, type->getArrayDimensionSize(i));
+            }
+            offset->operand(BINARY_OP_MUL, offset, 4);
+
+            Register *finalReg = regSystem.getReg(INT_TYPE, RegforceCaller);
+
+            // If it is declared function parameter
+            if(addr.hasReg() && addr.getOffset() > 0) 
+                addr.loadType = LOADWORD;
+            else 
+                addr.loadType = LOADADDR;
+
+            DebugInfo("paramDimension: %d", paramCount);
+            finalReg->load(addr);
+            finalReg->operand(BINARY_OP_ADD, finalReg, offset);
+            regSystem.lock(offset, false);
+
+            arrVariable[node] = new Address(finalReg);
+            arrVariable[node]->_volatile = true;
+
+            if(paramCount != type->getDimension())
+                arrVariable[node]->loadType = LOADADDR;
+            return *arrVariable[node];
+        }
         return addr;
 
         if(!strcmp("NULL", addr.getName()))
@@ -455,7 +581,6 @@ void ARSystem::prologue(const char* funcName){
 
     /* naive save Caller Save Register */
     std::vector<Register*> callee = regSystem.getCallee();
-    DebugInfo("%d", callee.size());
     for(std::vector<int>::size_type i=0; i!=callee.size(); i++)
         callee[i]->save(Address(fp) - 4*i - 4);
 
@@ -498,7 +623,7 @@ void ARSystem::epilogue(){
     regSystem.clear();
 }
 
-void ARSystem::globleInitRoutine(const char *start, const char *end){
+void ARSystem::globalInitRoutine(const char *start, const char *end){
     char **routine = new char*[2];
     routine[0] = strdup(start);
     routine[1] = strdup(end);
@@ -526,7 +651,7 @@ void AST_NODE::setRegister(Register *tmp, bool autoload){
         Address addr = ar.getAddress(this);
         if(autoload) reg->load(addr);
         reg->setTarget(addr);
-        DebugInfo("\t\t\t\t\e[35mcant find any, alloc a new register: %s to ID: %s\e[m\n", reg->name(), getSymbol()->name);
+        DebugInfo("\t\t\t\t\e[35mcant find any, alloc a new register: %s to ID: %s(%s)\e[m\n", reg->name(), getSymbol()->name, addr.getName());
     }
     else 
         reg->setTarget(this);
@@ -541,11 +666,11 @@ Register *AST_NODE::getTempReg(int option){
 
     bool isID = (type() == IDENTIFIER_NODE && getSymbol()->attribute->getKind() == VARIABLE_ATTRIBUTE);
     Address address = ar.getAddress(this);
-
     if(!isReset && isID && regSystem.getFit(address) != NULL){
         reg = regSystem.getFit(address);
         DebugInfo("\t\t\t\t\e[35mfound register: %s in same symbol: %s with addr: %s\e[m", reg->name(), this->getSymbol()->name, address.getName());
     } else {
+        DebugInfo("try to get new register");
         DATA_TYPE type = getDataType();
         Register *tmp = regSystem.getReg(getDataType(), isCaller);
         setRegister(tmp, !isDisableload);

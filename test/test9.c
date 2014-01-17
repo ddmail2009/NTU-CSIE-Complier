@@ -3,13 +3,13 @@ int dim = 2;
 int a[2][2][2], b[2][2][2];
 int c[2][2][2];
 
-void print()
+void print(int a[2][2][2])
 {
     int i,j,k;
     for (i = 0; i < dim; i = i + 1) {
         for (j = 0; j < dim; j = j + 1) {
             for(k = 0; k < dim; k = k + 1) {
-                write(c[i][j][k]);
+                write(a[i][j][k]);
                 write(" ");
             }
             write("\n");
@@ -30,7 +30,6 @@ void arraymult()
             }
         }
     }
-    print();
 }
 
 
@@ -46,6 +45,7 @@ int main()
             }
         }
     }
+    print(a);
     write("Enter matrix 2 of dim 2 x 2 x 2 : \n");
     for (i = 0; i < dim; i = i + 1) {
         for (j = 0; j < dim; j = j + 1) {
@@ -54,7 +54,9 @@ int main()
             }
         }
     }
+    print(b);
     arraymult();
+    print(c);
 
     return 0;
 }

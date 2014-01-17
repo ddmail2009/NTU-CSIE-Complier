@@ -5,6 +5,9 @@
 #include <cstdlib>
 #include <cstdarg>
 
+#define LOADADDR 0
+#define LOADWORD 1
+
 // forward declaration
 class Register;
 
@@ -13,9 +16,10 @@ class Address{
     public:
         Address(Register *r, int offset = 0):
             reg(r),
-            _offset(offset),
-            addrIsLabel(false) {
+            _offset(offset){
                 this->setName();
+                this->loadType = LOADWORD;
+                this->_volatile = false;
         }
 
         Address(const char *format, ...){
@@ -23,7 +27,10 @@ class Address{
             va_start(args, format);
             vsprintf(this->addrName, format, args);
             va_end(args);
-            addrIsLabel = true;
+            this->loadType = LOADWORD;
+            this->_offset = 0;
+            this->reg = NULL;
+            this->_volatile = false;
         }
 
         bool operator ==(const Address &addr) const {
@@ -40,12 +47,14 @@ class Address{
 
         const char *getName() const{ return addrName; }
         const int getOffset() const{ return _offset; }
-        bool isLabel() const{ return addrIsLabel; }
+        const char *getRegName() const;
+        bool hasReg() const;
+
+        int loadType, _volatile;
     private:
         char addrName[100];
         Register *reg;
         int _offset;
-        bool addrIsLabel;
 
         void setName();
 };
